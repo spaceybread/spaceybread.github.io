@@ -1,6 +1,8 @@
 .margins {
 
   width: 800px;
-  padding:150px;
-
+  padding-left:80px;
+  padding-right: 80px;
+  padding-top: 25px;
+  padding-bottom: 25px;
 }
