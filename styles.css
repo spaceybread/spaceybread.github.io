@@ -4,7 +4,10 @@
   margin-right: 20px;
   top: 25px;
   width: 1200px;
-  padding: 25px;
+  padding-left:25px;
+  padding-right: 50px;
+  padding-top: 100px;
+  padding-bottom: 25px;
   background-color: #fbf8f3;
 }
 
