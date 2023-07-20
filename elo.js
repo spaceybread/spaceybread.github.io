@@ -1,11 +1,12 @@
 function calculateElo() {
   // Get values from the input text boxes
-  var num1 = parseFloat(document.getElementById('r1').value);
-  var num2 = parseFloat(document.getElementById('r2').value);
+  var player1Rating = parseFloat(document.getElementById('r1').value);
+  var player2Rating = parseFloat(document.getElementById('r2').value);
+  var kValue = parseFloat(document.getElementById('k').value);
 
-  // Calculate the sum
-  var sum = num1 + num2;
+  // Calculate the sum of player1Rating and player2Rating
+  var result = player1Rating + player2Rating;
 
-  // Set the result as the value of the 'result' span element
-  document.getElementById('result').textContent = sum;
+  // Update the 'result' span element with the calculated sum
+  document.getElementById('result').textContent = result;
 }
