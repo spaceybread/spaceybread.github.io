@@ -1,36 +1,37 @@
 <html>
-  <head>
-    <link rel="stylesheet" href="styles.css">
-    <title> Elo Calculator </title>
-    <link rel="icon" type="image/x-icon" href="icon.ico">
-  </head>
-  <body style="background-color:#e8b025;">
+<head>
+  <link rel="stylesheet" href="styles.css">
+  <title>Elo Calculator</title>
+  <link rel="icon" type="image/x-icon" href="icon.ico">
+</head>
+<body style="background-color:#e8b025;">
+  <center>
+    <div class="main">
+      <center><h2 style="font-family:'Courier New'">The Elo Rating System</h2></center>
+      <hr>
+      <br>
+      <form style="font-family:'Courier New'">
+        <center>
+          Player 1 Rating: <input type="number" id="r1" value="1400">
+          Player 2 Rating: <input type="number" id="r2" value="1400">
+          k Value: <input type="number" id="k" value="32">
+        </center>
+      </form>
+      <p>Result: <span id="result">0</span></p>
       <center>
-        <div class="main">
-          <center><h2 style="font-family:'Courier New'">The Elo Rating System</h2></center>
-          <hr>
-          <br>
-          <form style="font-family:'Courier New'">
-            <center>
-            Player 1 Rating: <input type="number" name="r1" value=1400>
-            Player 2 Rating: <input type="number" name="r2" value=1400>
-            k Value: <input type="number" name="k" value=32>
-            </center>
-          </form>
-          <p><span id="result">0</span></p>
-          <center>
-            <button type="button" name="submit">Calculate</button>
-          </center
-          <br>
-          <br>
-          <br>
-          <br>
-          <br>
-          <hr>
-          <p style="font-family:'Courier New'"> Last updated: 2023-07-20 21:41:00 UTC+0 </p>
-          <p style="font-family:'Courier New'">A spaceybread production.</p>
-          <script src="elo.js"></script>
-        </div>
+        <button type="button" name="submit" onclick="calculateElo()">Calculate</button>
       </center>
-  </body>
+      <br>
+      <br>
+      <br>
+      <br>
+      <br>
+      <hr>
+      <p style="font-family:'Courier New'">Last updated: 2023-07-20 21:41:00 UTC+0</p>
+      <p style="font-family:'Courier New'">A spaceybread production.</p>
+    </div>
+  </center>
+
+  <script src="elo.js"></script>
+</body>
 </html>
