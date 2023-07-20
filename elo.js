@@ -4,9 +4,10 @@ function calculateElo() {
   var player2Rating = parseFloat(document.getElementById('r2').value);
   var kValue = parseFloat(document.getElementById('k').value);
 
-  // Calculate the sum of player1Rating and player2Rating
-  var result = player1Rating + player2Rating;
 
-  // Update the 'result' span element with the calculated sum
-  document.getElementById('result').textContent = result;
+  var expecA = (1 + 10**((player2Rating - player1Rating)/400))**(-1);
+  var expecB = (1 + 10**((player1Rating - player2Rating)/400))**(-1);
+
+  document.getElementById('expecA').textContent = expecA;
+  document.getElementById('expecB').textContent = expecB;
 }
