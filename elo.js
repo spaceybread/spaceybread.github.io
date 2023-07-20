@@ -10,14 +10,14 @@ function calculateElo() {
   // new rating = rating + k * (score - expected score) 
   // win = 1, draw = 0.5, loss = 0
   
-  var winAratA = player1Rating + kValue * (1 - expecA);  
-  var winAratB = player2Rating + kValue * (0 - expecB);  
+  var winAratA = Math.round(player1Rating + kValue * (1 - expecA));  
+  var winAratB = Math.round(player2Rating + kValue * (0 - expecB));  
 
-  var winDratA = player1Rating + kValue * (0.5 - expecA);  
-  var winDratB = player2Rating + kValue * (0.5 - expecB);
+  var winDratA = Math.round(player1Rating + kValue * (0.5 - expecA));  
+  var winDratB = Math.round(player2Rating + kValue * (0.5 - expecB));
 
-  var winBratA = player1Rating + kValue * (0 - expecA);  
-  var winBratB = player2Rating + kValue * (1 - expecB);
+  var winBratA = Math.round(player1Rating + kValue * (0 - expecA));  
+  var winBratB = Math.round(player2Rating + kValue * (1 - expecB));
 
   document.getElementById('expecA').textContent = expecA;
   document.getElementById('expecB').textContent = expecB;
