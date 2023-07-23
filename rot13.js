@@ -5,7 +5,7 @@ function rotate() {
   const alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];   
 
   //look for letter in the alphabet and write that index in the list 
-  const rotArray = [];
+  var rotString = "";
 
   for (let i = 0; i < splitText.length; i++) {
     var aText = splitText[i];
@@ -16,11 +16,10 @@ function rotate() {
     a = a % 26;
     a = a - 1; 
 
-    rotArray[i] = alphabet[a];
+    rotString = rotString.concat(alphabet[a]);
   }
   
-  let rotString = rotArray.join('');
 
-  document.getElementById('out').textContent = rotArray;
+  document.getElementById('out').textContent = rotString;
 }
 
