@@ -9,11 +9,21 @@ function rotate() {
   var textLength = splitText.length;
   const textAsNumber = [];
 
+  const rotArray = [];
+
   for (let i = 0; i < textLength; i++) {
     var a = alphabet.indexOf(splitText[i]);
-    textAsNumber[i] = a;
+    a = a + 1; 
+    //nothing but for my sanity while doing mod functions
+    a = a + 13;
+    a = a % 26;
+    a = a - 1; 
+
+    rotArray[i] = alphabet[a];
   }
   
-  document.getElementById('out').textContent = textAsNumber;
+  let rotString = rotArray.join('');
+
+  document.getElementById('out').textContent = rotString;
 }
 
