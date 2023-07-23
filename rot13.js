@@ -12,7 +12,8 @@ function rotate() {
   const rotArray = [];
 
   for (let i = 0; i < textLength; i++) {
-    var a = alphabet.indexOf(splitText[i]);
+    var aText = splitText[i];
+    var a = alphabet.indexOf(aText);
     a = a + 1; 
     //nothing but for my sanity while doing mod functions
     a = a + 13;
