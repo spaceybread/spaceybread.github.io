@@ -6,13 +6,14 @@ function rotate() {
 
   //look for letter in the alphabet and write that index in the list
 
-  let textLength = splitText.length;
+  var textLength = splitText.length;
   const textAsNumber = [];
 
   for (let i = 0; i < textLength; i++) {
-    textAsNumber.push(alphabet.indexOf(splitText[i]));
+    var a = alphabet.indexOf(splitText[i]);
+    textAsNumber[i] = a;
   }
-
+  
   document.getElementById('out').textContent = textAsNumber;
 }
 
