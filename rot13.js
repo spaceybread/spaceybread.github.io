@@ -9,18 +9,18 @@ function rotate() {
   var rotString = "";
 
   for (let i = 0; i < splitText.length; i++) {
-
-    if (splitText[i] == " ") {
-        rotString = rotString.concat(" ");
+    if (alphabet.indexOf(splitText[i]) == -1) {
+      rotString = rotString.concat(splitText[i]);
     } else {
-        var aText = splitText[i];
-        var a = alphabet.indexOf(aText);
-        a = a + 13;
-        a = a % 26;
-        rotString = rotString.concat(alphabet[a]);
-    }    
-  }
+      var aText = splitText[i];
+      var a = alphabet.indexOf(aText);
+      //nothing but for my sanity while doing mod functions
+      a = a + 13;
+      a = a % 26;
+      rotString = rotString.concat(alphabet[a]);
+    }
 
+  }
 
   document.getElementById('out').textContent = rotString;
 }
