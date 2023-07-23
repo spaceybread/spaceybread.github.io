@@ -15,11 +15,8 @@ function rotate() {
     } else {
         var aText = splitText[i];
         var a = alphabet.indexOf(aText);
-        a = a + 1;
-        //nothing but for my sanity while doing mod functions
         a = a + 13;
         a = a % 26;
-        a = a - 1;
         rotString = rotString.concat(alphabet[a]);
     }    
   }
