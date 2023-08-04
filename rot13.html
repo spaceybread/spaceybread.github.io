@@ -24,7 +24,11 @@
       <hr>
       <p style="font-family:'Courier New'"><b>What is ROT-13?</b></p>
       <p style="font-family:'Courier New'"> ROT-13 is a simple substitution cipher that replaces your character at index <i>i</i> with character <i>i + 13 (mod 13)</i>, like for example it replaces <i>a</i> the first character in the alphabet with <i>n</i>, the 14th character in the alphabet. While it may not seem too different from other substitution ciphers, that is, those that shift characters in the message by some specified number in the alphabet, it is extremely interesting due to the fact that it changes <i>n</i> to <i>n + 13</i> in the Latin alphabet, an alphabet that contains 26 characters. It can be illustrated in the following way: </p>
-      <p style="font-family:'Courier New'"> - - - </p>
+      <p style="font-family:'Courier New'"> 
+      Orgininal character index = <i>n</i>
+      Shifted once = <i>n + 13 (mod 13)</i>
+      Shifted twice = <i>n + 26 (mod 13) => n</i>
+      </p>
       <br>
       <br>
       <br>
