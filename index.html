@@ -13,33 +13,6 @@
           <h2 style="color:aqua; font-family: Arial, Helvetica, sans-serif;">Another happy landing! Take a break!</h2>
           <br>
           <br>
-          <b><p style="font-family:'Courier New'">What are prime numbers?</p></b>
-          <p style="font-family:'Courier New'"> Any natural number <i>n</i>, where <i>n</i> is greater than 1, that has exactly two factors (1 and <i>n</i>, itself) is called a prime number; any number that does not have this property is called a composite number. Intuitively, you may imagine prime numbers to be almost like Lego pieces that can be used to build up large sets analogous to composite numbers. It would, thus, be fair to call prime numbers the building blocks of all natural numbers. The following is an illustration of how a prime number may be factorized versus a composite number. </p>
-          <p style="font-family:'Courier New'"> The factorization for prime numbers includes only 1 and itself, p: <i>p = p * 1 </i></p>
-          <p style="font-family:'Courier New'"> The factorization for composite numbers includes its constituent prime numbers: <i>n = x * y * z * 1</i> where all <i>x, y,</i> and <i>z</i> are prime numbers</p>
-          <br>
-          <b><p style="font-family:'Courier New'">How many prime numbers?</p></b>
-          <p style="font-family:'Courier New'"> Short answer: infinitely many. This may seem counterintuitive at a cursory glance given that the frequency of prime numbers seems to go down as you progress further deeper into natural numbers but their infinitude can be proven rigorously, thanks to Euclid.</p>
-          <p style="font-family:'Courier New'"> Suppose you create a finite set of prime numbers declaring that this list contains all prime numbers, one could disprove you by the following method: </p>
-          <p style="font-family:'Courier New'"> 
-            List of primes: <i>p<sub>1</sub>, p<sub>2</sub>, p<sub>3</sub>... p<sub>n</sub></i><br>
-            Assume a number <i>m</i> such that <i>m = p<sub>1</sub> * p<sub>2</sub> * p<sub>3</sub>... * p<sub>n</sub></i><br>     
-            By definition, <i>m</i> is divisible by all primes in the list, implying <i>0 ≡ m (mod p<sub>i</sub>)</i> for all <i>i</i><br>
-            Now, assume a number <i>P</i> such that, <i>P = m + 1</i> which implies <i>1 ≡ P(mod p<sub>i</sub>)</i> for all <i>i</i><br>
-          </p>
-          <p style="font-family:'Courier New'">
-            This new number, <i>P</i>, isn't divisible by any of the primes that were included in the finite set which implies that <i>P</i> is prime. This refutes the earlier claim of a finite list with all primes since it did not include P, and thus, there's an infinite number of primes in the grander set of natural numbers.<br>
-          </p>
-          <br>
-          <b><p style="font-family:'Courier New'">How to identify a prime number?</p></b>
-          <p style="font-family:'Courier New'">The most obvious way to verify a number's status as a prime number would be to attempt to check divisibility by all primes smaller than the number however, that is much easier said than done. While it is a feasible method for small primes, it requires far too much computation and time as the value of prime numbers increases. Instead, a more efficient method to check for primality is with Fermat's Little Theorem:</p>
-          <center><i><p style="font-family:'Courier New'">a<sup>p - 1</sup> ≡ 1 (mod p) </p></i></center>
-          <p style="font-family:'Courier New'">where <i>a</i> is called the witness number and <i>p</i> is the number to be checked for primality. </p>
-          <p style="font-family:'Courier New'">This theorem allows for any value of <i>a</i> and states that if a number, <i>p</i>, does not satisfy this theorem, then that value for <i>p</i> is a composite number however, the inverse is not true. Certain values for <i>a</i> might satisfy the theorem despite <i>p</i> not being a prime number if <i>a</i> and <i>p</i> are coprime or relatively prime. Composite numbers that satisfy the congruence are called Carmicheal numbers.</p>
-          <p style="font-family:'Courier New'">This method can thus be used to check for primality if implemented correctly with adequate values for <i>a</i>.</p>
-          <br>
-          <b><p style="font-family:'Courier New'">Where are the prime numbers?</p></b>
-          <p style="font-family:'Courier New'"> - - - </p>
           <br>
           <br>
           <br>
