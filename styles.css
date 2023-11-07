@@ -1,15 +1,16 @@
 .main {
-  position: relative;
-  margin-left: 20px;
-  margin-right: 20px;
-  top: 25px;
-  width: 1200px;
-  padding-left:50px;
-  padding-right: 50px;
-  padding-top: 25px;
-  padding-bottom: 25px;
-  text-align: left;
-  background-color: #EDE8DD;
+    position: relative;
+    margin-left: 20px;
+    margin-right: 20px;
+    top: 25px;
+    width: 1200px;
+    padding-left:50px;
+    padding-right: 50px;
+    padding-top: 25px;
+    padding-bottom: 25px;
+    text-align: left;
+    background-color: #EDE8DD;
+  }
 
   a:link {
     color: green;
@@ -33,6 +34,4 @@
     color: white;
     background-color: transparent;
     text-decoration: underline;
-}
-  
 }
