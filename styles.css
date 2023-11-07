@@ -10,4 +10,29 @@
   padding-bottom: 25px;
   text-align: left;
   background-color: #EDE8DD;
+
+  a:link {
+    color: green;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:visited {
+    color: red;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: white;
+    background-color: transparent;
+    text-decoration: underline;
+  }
+
+  a:active {
+    color: white;
+    background-color: transparent;
+    text-decoration: underline;
+}
+  
 }
