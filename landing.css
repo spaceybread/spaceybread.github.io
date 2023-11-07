@@ -14,25 +14,25 @@
 }
 
 a:link {
-    color: aqua;
+    color: white;
     background-color: transparent;
     text-decoration: none;
   }
 
   a:visited {
-    color: aqua;
+    color: white;
     background-color: transparent;
     text-decoration: none;
   }
 
   a:hover {
-    color: white;
+    color: green;
     background-color: transparent;
     text-decoration: underline;
   }
 
   a:active {
-    color: white;
+    color: green;
     background-color: transparent;
     text-decoration: underline;
 }
