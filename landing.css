@@ -14,13 +14,13 @@
 }
 
 a:link {
-    color: green;
+    color: aqua;
     background-color: transparent;
     text-decoration: none;
   }
 
   a:visited {
-    color: red;
+    color: aqua;
     background-color: transparent;
     text-decoration: none;
   }
