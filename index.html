@@ -3,12 +3,37 @@
     <link rel="stylesheet" href="landing.css">
     <title> Landing! </title>
     <link rel="icon" type="image/x-icon" href="icon.ico">
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function(event) {
+        const connectionStatus = document.getElementById("connectionStatus");
+        let count = 0;
+        let increasing = true;
+
+        setInterval(() => {
+          if (increasing) {
+            count += 1;
+            if (count === 3) {
+              increasing = false;
+            }
+          } else {
+            count -= 1;
+            if (count === 1) {
+              increasing = true;
+          }
+        }
+        const dots = ".".repeat(count);
+        connectionStatus.textContent = `Establishing connection${dots}`;
+        }, 500);
+      });
+    </script>
   </head>
   <body style="background-color:#696969;">
       <center>
         <div class="main">
             <!--<p style="color:white;font-family: Arial, Helvetica, sans-serif;"> -->
-          <b><h2 style="color:aqua; font-family:'Courier New'">Another happy landing! Take a break!</h2></b>
+          <div id="connectionStatus"><b><h2 style="color:aqua; font-family:'Courier New'">Establishing connection</h2></b></div>
+          
           <br>
             <b><p style="color:white;font-family:'Courier New'">Things I'm interested in:</p></b>
             <p style="color:white;font-family:'Courier New'">
