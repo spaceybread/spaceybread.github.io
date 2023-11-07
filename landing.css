@@ -36,3 +36,10 @@ a:link {
     background-color: transparent;
     text-decoration: underline;
 }
+
+#connectionStatus {
+    font-size: 24px;
+    font-weight: bold;
+    color: aqua;
+    font-family:'Courier New';
+  }
