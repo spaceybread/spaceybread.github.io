@@ -26,13 +26,13 @@ a:link {
   }
 
   a:hover {
-    color: green;
+    color: #32CD32;
     background-color: transparent;
     text-decoration: underline;
   }
 
   a:active {
-    color: green;
+    color: #32CD32;
     background-color: transparent;
     text-decoration: underline;
 }
