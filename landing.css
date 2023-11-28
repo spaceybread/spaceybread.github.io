@@ -28,13 +28,13 @@ a:link {
   a:hover {
     color: #32CD32;
     background-color: transparent;
-    text-decoration: underline;
+    text-decoration: none;
   }
 
   a:active {
     color: #32CD32;
     background-color: transparent;
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 #connectionStatus {
