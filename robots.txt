@@ -4,7 +4,7 @@
 # |  _  |  __/ | | (_) |  
 # |_| |_|\___|_|_|\___/     
 
-# I've had no problems with robots at the moment but this is just a premptive measure. 
+# I've had no problems with robots at the moment so this is just a premptive measure. I don't even have any blockers set up, just some ascii art. The robot is from cloudflare.com's robots.txt 
 
 #              ________
 #   __,_,     |        |
