@@ -1,0 +1,48 @@
+.main {
+  position: relative;
+  margin-left: 20px;
+  margin-right: 20px;
+  top: 25px;
+  width: 1200px;
+  padding-left:50px;
+  padding-right: 50px;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  text-align: left;
+  background-color: #EDE8DD;
+}
+
+a:link {
+  color: red;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:visited {
+  color: red;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: white;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+a:active {
+  color: white;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+img {
+    float: right;
+    margin-right: 15px;
+    max-width: 30%;
+    max-height: 30%
+}
+  
+p {
+  overflow: hidden;
+}
