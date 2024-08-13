@@ -36,11 +36,18 @@ a:active {
   text-decoration: underline;
 }
 
-img {
+#viirsImg {
     float: right;
     margin-right: 15px;
     max-width: 30%;
     max-height: 30%
+}
+
+#img1935b {
+  float: left;
+  margin-right: 15px;
+  max-width: 35%;
+  max-height: 35%
 }
   
 p {
