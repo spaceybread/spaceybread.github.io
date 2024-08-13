@@ -36,11 +36,18 @@ a:active {
   text-decoration: underline;
 }
 
-#viirsImg {
+#imgVIIRS {
     float: right;
     margin-right: 15px;
-    max-width: 30%;
-    max-height: 30%
+    max-width: 35%;
+    max-height: 35%
+}
+
+#imgViewpoint {
+  float: right;
+  margin-left: 15px;
+  max-width: 45%;
+  max-height: 45%
 }
 
 #img1935b {
