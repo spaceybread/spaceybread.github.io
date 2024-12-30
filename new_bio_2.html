@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>spacey's crypt</title>
+  <style>
+    * {
+        user-select: none;
+        -webkit-user-select: none; /* For Safari */
+        -moz-user-select: none;    /* For Firefox */
+        -ms-user-select: none;     /* For older IE versions */
+    }
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #000;
+    }
+    .container {
+      display: flex;
+      align-items: stretch;
+      width: 90%;
+      max-width: 1200px;
+      gap: 5px;
+    }
+    .side-block {
+      width: calc(2 * 150px);
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .side-block h1 {
+      font-size: 24px;
+      font-family: monospace;
+      margin: 0 0 10px;
+    }
+    .side-block p {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-gap: 5px;
+      width: 100%;
+      margin: 0;
+    }
+    .grid-item {
+        height: 150px;
+        width: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #000;
+        background-color: #000;
+        position: relative;
+    }
+    .grid-item-exp {
+        height: 150px;
+        width: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 2px solid #000;
+        background-color: #000;
+        position: relative;
+    }
+    .grid-item img {
+      width: 100%;
+      height: auto;
+      max-height: 200px;
+      object-fit: cover;
+    }
+    .grid-item-bash {
+        width: 150px;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 0px solid #AAA;
+        background-color: #000;
+        position: relative;
+    }
+    .grid-item-bash p {
+        width: 100%;
+        height: auto;
+        max-height: 200px;
+        object-fit: cover;
+        position: absolute;
+        bottom: 0; left: 0;
+        padding-left: 10px
+    }
+    .bash-link {
+        color: green;
+        font-family: monospace;
+        font-size: 16px;
+    }
+    .expanded {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #444;
+        z-index: 10;
+        color: #fff;
+        font-family: monospace;
+        font-size: 18px;
+        text-align: center;
+        cursor: pointer;
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="side-block">
+      <h1>Ansh Aggarwal</h1>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sit amet velit vel elit sodales feugiat.</p>
+    </div>
+    <div class="grid" id="grid">
+      <a href="https://example.com/6" class="grid-item"></a>
+      <a href="https://example.com/7" class="grid-item"></a>
+      <a href="https://example.com/8" class="grid-item"></a>
+      <a href="https://example.com/9" class="grid-item"></a>
+      <div class="grid-item expandable">Click Me</div>
+      <a href="https://example.com/6" class="grid-item"></a>
+      <a href="https://example.com/7" class="grid-item"><img src="media/enigma_machine.png" alt="Image 7"></a>
+      <a href="https://example.com/8" class="grid-item"><img src="media/badApple.gif" alt="Image 8" class="unfit"></a>
+      <a href="https://example.com/9" class="grid-item"><img src="media/db6075.png" alt="Image 9"></a>
+      <a href="https://example.com/10" class="grid-item"><img src="media/mail_swamp_cropped.png" alt="swamped communication"></a>
+      <a href="https://example.com/6" class="grid-item"><img src="media/orbits.gif" alt="3 Body Problem"></a>
+      <a href="https://example.com/7" class="grid-item"><img src="media/8plot.gif" alt="3 Body Problem"></a>
+      <a href="https://example.com/8" class="grid-item"><img src="media/sudoku_uncolored_dense_square.png" alt="sudoku graph uncolored"></a>
+      <a href="https://example.com/9" class="grid-item"><img src="media/mcv/VIIRS_square.jpg" alt="McV VIIRS Imagery"></a>
+      <a href="https://example.com/10" class="grid-item-bash" alt="a web terminal!"><p class="bash-link"> > bash</p></a>
+      <a href="https://example.com/7" class="grid-item"></a>
+      <a href="https://example.com/8" class="grid-item"></a>
+      <a href="https://example.com/9" class="grid-item"></a>
+      <a href="https://example.com/10" class="grid-item"></a>
+      <a href="https://example.com/6" class="grid-item"></a>
+    </div>
+    <div class="side-block">
+      <h1>Right Block</h1>
+      <p>Curabitur lobortis id lorem id bibendum. Ut id consectetur magna. Maecenas feugiat erat ut euismod luctus.</p>
+    </div>
+  </div>
+  <script>
+      // https://www.schemecolor.com/soft-tones.php
+      // const colors = ["#ECC1D1", "#BEAFE1", "#D9B4E2", "#EEE7D3", "#EAD7C3", "#C8D3B8"];
+      // https://www.schemecolor.com/dull-autumn-color-palette.php + https://www.schemecolor.com/summer-before-fall.php
+      const colors = ["#A9C28C", "#87A766", "#DED8BB", "#CEB38C", "#BB8C68", "#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914", "#AE9618", "#757943"];
+
+      function shuffleGrid() {
+        const grid = document.getElementById("grid");
+        const items = Array.from(grid.children);
+        const shuffled = items.sort(() => Math.random() - 0.5);
+        grid.innerHTML = "";
+        shuffled.forEach(item => grid.appendChild(item));
+      }
+
+      function assignRandomColors() {
+        const grid = document.getElementById("grid");
+        const items = Array.from(grid.children);
+
+        items.forEach(item => {
+          if (!item.querySelector("img") && !item.querySelector("p")) {
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            item.style.backgroundColor = randomColor;
+          }
+        });
+      }
+      
+      const grid = document.getElementById("grid");
+      let isExpanded = false;
+
+      function expandGrid() {
+        if (isExpanded) return;
+
+        const gridItems = Array.from(grid.children);
+
+        gridItems.forEach(item => {
+          item.style.display = "none";
+        });
+
+        const expandedBlock = document.createElement("div");
+        expandedBlock.id = "expandedBlock";
+        expandedBlock.style.gridColumn = "1 / -1";
+        expandedBlock.style.gridRow = "1 / -1";
+        expandedBlock.style.display = "flex";
+        expandedBlock.style.flexDirection = "column";
+        expandedBlock.style.overflow = "auto";
+        expandedBlock.style.alignItems = "center";
+        expandedBlock.style.justifyContent = "center";
+        expandedBlock.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        expandedBlock.style.color = "white";
+        expandedBlock.style.height = "631px";
+        expandedBlock.style.width = "790px";
+        expandedBlock.style.fontSize = "20px";
+        expandedBlock.style.cursor = "pointer";
+        expandedBlock.innerHTML = `
+                <h1 style="margin-bottom: 20px; font-size: 24px;">Papers</h1>
+                <p>This is some rich content with images and text. Add anything you want here!</p>
+                <img src="https://cdn-useast1.kapwing.com/static/templates/this-is-where-id-put-my-trophy-if-i-had-one-meme-template-full-79af6e4e.webp" alt="publication record" style="width: 15vw; min-width: 330px;">
+                <button style="padding: 10px 20px; background-color: #555; color: white; border: none; cursor: pointer;">Click to Collapse</button>
+              `;
+
+        grid.appendChild(expandedBlock);
+
+        expandedBlock.addEventListener("click", collapseGrid);
+        isExpanded = true;
+      }
+
+      function collapseGrid() {
+        if (!isExpanded) return;
+
+        const expandedBlock = document.getElementById("expandedBlock");
+        if (expandedBlock) {
+          expandedBlock.remove();
+        }
+
+        const gridItems = Array.from(grid.children);
+        gridItems.forEach(item => {
+          item.style.display = "";
+        });
+        
+        shuffleGrid();
+        assignRandomColors();
+        isExpanded = false;
+      }
+
+      window.onload = () => {
+        shuffleGrid();
+        assignRandomColors();
+
+        const expandableTile = document.querySelector(".expandable");
+        if (expandableTile) {
+          expandableTile.addEventListener("click", expandGrid);
+        }
+      };
+  </script>
+
+</body>
+</html>
