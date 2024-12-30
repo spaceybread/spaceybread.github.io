@@ -15,7 +15,7 @@ const tileContent = {
     `,
     "tiles?": `
       <h1 style="margin-bottom: 20px; font-size: 24px;">what's with the tiles?</h1>
-      <p>In preparation for grad school applications, I've visited a lot of academic homepages and frankly, a lot of them are pretty boring. As such, unique websites stick out way more than they usually would and one such website was Prof. Eddie Kohler's old landing page with its random tiles. I really liked the aesthetic and used it as inspiration for this site.</p>
+      <p>In preparation for grad school applications, I've visited a lot of academic homepages and frankly, most of them are pretty boring. As such, unique websites stick out way more than they usually would and one such website was Prof. Eddie Kohler's old landing page with its random tiles. I really liked the aesthetic and used it as inspiration for this site.</p>
     `
   };
   
