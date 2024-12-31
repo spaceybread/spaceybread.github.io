@@ -1,84 +1,44 @@
-<html>
-  <head>
-    <link rel="stylesheet" href="stylesheets/landing.css">
-    <title> Spacey's Archive </title>
-    <link rel="icon" type="image/x-icon" href="media/icon.ico">
-    <script>
-      document.addEventListener("DOMContentLoaded", function(event) {
-        const connectionStatus = document.getElementById("connectionStatus");
-        let count = 0;
-        let increasing = true;
-
-        setInterval(() => {
-          if (increasing) {
-            count += 1;
-            if (count === 3) {
-              increasing = false;
-            }
-          } else {
-            count -= 1;
-            if (count === 1) {
-              increasing = true;
-          }
-        }
-        const dots = ".".repeat(count);
-        connectionStatus.textContent = `Establishing connection${dots}`;
-        }, 500);
-      });
-    </script>
-  </head>
-  <body style="background-color:#696969;">
-      <center>
-        <div class="main">
-          <script src="./scripts/oneko.js"></script>
-            <!--<p style="color:white;font-family: Arial, Helvetica, sans-serif;"> -->
-            <!-- <h2 style="color:aqua; font-family:'Courier New'"> </h2>--->
-          <div id="connectionStatus"><b>Establishing connection</b></div>
-          
-          <br>
-            <b><p style="color:white;font-family:'Courier New'">Things I'm interested in:</p></b>
-            <p style="color:white;font-family:'Courier New'">
-             <b> Prime Number Generation </b>
-              
-              - <a href="https://spaceybread.github.io/primeGen.html">Documentation (WIP) [/]</a>, <a href="https://github.com/spaceybread/didactic-octo-lamp/blob/main/sieve.cpp">Sieve of Eratosthenes [/]</a>, <a href="https://github.com/spaceybread/bookish-computing-machine/blob/main/prime.py">Inefficient Division Generation [/]</a>
-            </p>
-            <p style="color:white;font-family:'Courier New'">
-             <b> Calculating Pi </b>
-              
-              - <a href="https://spaceybread.github.io/pi.html">Documentation (WIP) [/]</a>, <a href="https://github.com/spaceybread/pi-am-doing-this">Chudnovsky Algorithm [/]</a>, <a href="https://github.com/spaceybread/pi-stress-test">Madhava-Leibniz Series [/]</a>, <a href="https://github.com/spaceybread/congenial-spoon">Monte Carlo Method [/]</a>
-            </p>
-            <p style="color:white;font-family:'Courier New'">
-             <b> Cryptography </b>
-              
-              - <a href="https://spaceybread.github.io/rot13.html"> ROT-13 (WIP) [/]</a>, <a href="https://github.com/spaceybread/bug-free-octo-sniffle/blob/main/RSA">RSA encryption [/]</a>, <a href="https://github.com/spaceybread/special-chainsaw">HOTP-TOTP [/]</a>, <a href="https://www.ibo.org/programmes/middle-years-programme/assessment-and-exams/personal-project/">Enigma Machine & The Bombe (PP) [/]</a>
-            </p>
-          <br>
-            <b><p style="color:white;font-family:'Courier New'">Some cool visuals I've generated: </p></b>
-            <center><img src="media/mand.jpg" alt="Manderblot" style="width:480px;height:480px;"></center>
-            <center><p style="color:white;font-family:'Courier New'"><a href="https://github.com/spaceybread/reimagined-parakeet">The Manderblot Set [/]</a></p></center>
-          <br>
-            <center><img src="media/idkhowwegothere.jpg" alt="IDKHOWWEGOTHERE" style="width:480px;height:480px;"></center>
-            <center><p style="color:white;font-family:'Courier New'"><a href="https://www.archive.bridgesmathart.org/2023/bridges2023-377.html#gsc.tab=0t">An incorrect implementation of Barry Cipra's rug resulted in this [/]</a></p></center>
-          <br>
-            <center><img src="media/badApple.gif" alt="Bad Apple!!" ></center>
-            <center><p style="color:white;font-family:'Courier New'"><a href="https://github.com/spaceybread/badApple"> Bad Apple!! in terminal [/]</a></p></center>
-          <br>
-            <center><img src="media/8plot.gif" alt="3 Body Problem: classic 8 figure" ></center>
-            <center><p style="color:white;font-family:'Courier New'"><a href="https://arxiv.org/pdf/math/0011268.pdf"> 3 body problem solution that produces an '8' figure [/]</a></p></center>
-          <br>
-            <center><img src="media/orbits.gif" alt="3 Body Problem: Orbits" ></center>
-            <center><p style="color:white;font-family:'Courier New'"><a href="https://github.com/spaceybread/solid-funicular"> 3 body problem solution that produces two orbits [/]</a></p></center>
-          <br>
-          <br>
-          <br>
-          <hr>
-          <p style="color:white;font-family:'Courier New'"> Last updated: 2024-03-01 19:30:00 UTC+0 </p>
-          <p style="color:white;font-family:'Courier New'">A <a href="https://github.com/spaceybread">spaceybread</a> project.</p>
-          <center><a href="https://dimden.dev/"><img src="https://dimden.dev/services/images/88x31.gif"></a> <img src="	https://boxy.neocities.org/images/mikuap.webp"> <img src="https://boxy.neocities.org/images/steam.gif"><a href="https://twelvemen.neocities.org/index.html" target="_blank"><img src="https://twelvemen.neocities.org/12menprime.gif"></a><a href="https://neocities.org" target="_blank"><img alt="DELETE TWITTER, MAKE A NEOCITIES" src="https://boxy.neocities.org/images/delete-twitter.gif"></a><img alt="DOOM" src="https://boxy.neocities.org/images/doomrl.gif"><a href="https://boxy.neocities.org/" target="_blank"><img src="https://boxy.neocities.org/images/boxBut.png" alt="boxy"></a></center>
-          
-        </div>
-
-        
-      </center>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>spacey's crypt</title>
+  <link rel="stylesheet" href="stylesheets/new_landing.css">
+</head>
+<body>
+  <div class="container">
+    <div class="side-block">
+      <h1>Ansh Aggarwal</h1>
+      <p>Undergraduate Researcher @ UW-Madiosn Dept. of Computer Sciences. Student Programmer @ SSEC</p>
+    </div>
+    <div class="grid" id="grid">
+      <a href="https://example.com/6" class="grid-item"></a>
+      <a href="https://example.com/7" class="grid-item"></a>
+      <div class="grid-item expandable">tiles?</div>
+      <div class="grid-item expandable">projects</div>
+      <div class="grid-item expandable">papers</div>
+      <a href="https://example.com/6" class="grid-item"></a>
+      <a href="old_landing.html" class="grid-item"><img src="media/enigma_machine.png" alt="old website"></a>
+      <a href="https://www.youtube.com/watch?v=NJrvNYCEN8U" class="grid-item"><img src="media/badApple.gif" alt="Image 8" class="unfit"></a>
+      <a href="https://wiki.math.wisc.edu/index.php/Directed_Reading_Program_Spring_2024" class="grid-item"><img src="media/db6075.png" alt="Image 9"></a>
+      <a href="https://kleinbottlebar.wordpress.com/" class="grid-item"><img src="media/mail_swamp_cropped.png" alt="swamped communication"></a>
+      <a href="https://github.com/spaceybread/solid-funicular" class="grid-item"><img src="media/orbits.gif" alt="3 Body Problem"></a>
+      <a href="https://arxiv.org/pdf/math/0011268" class="grid-item"><img src="media/8plot.gif" alt="3 Body Problem"></a>
+      <a href="https://kleinbottlebar.wordpress.com/2024/12/24/coloring-sudoku/" class="grid-item"><img src="media/sudoku_uncolored_dense_square.png" alt="sudoku graph uncolored"></a>
+      <a href="https://spaceybread.github.io/mcv" class="grid-item"><img src="media/mcv/VIIRS_square.jpg" alt="McV VIIRS Imagery"></a>
+      <a href="https://example.com/10" class="grid-item-bash" alt="a web terminal!"><p class="bash-link"> > bash</p></a>
+      <a href="https://example.com/7" class="grid-item"></a>
+      <a href="https://example.com/8" class="grid-item"></a>
+      <a href="https://example.com/9" class="grid-item"></a>
+      <a href="https://example.com/10" class="grid-item"></a>
+      <a href="https://example.com/6" class="grid-item"></a>
+    </div>
+    <div class="side-block">
+      <h1>Notice to early visitors</h1>
+      <p>You're early! This page is still under construction. Stay tuned!</p>
+    </div>
+  </div>
+  <script src="scripts/landing.js"></script>
+</body>
 </html>
