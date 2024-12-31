@@ -72,6 +72,8 @@ const tileContent = {
       <p class="para">I help run the <a href="https://csec.cs.wisc.edu/">Cybersecurity Club [/]</a> at UW-Madison and I'm also a part of UW-Madison's CTF team, 0xbad9e125! 
       
       I also enjoy science communication and write about things in mathematics, computer science, and occasionally physics over at <a href="https://kleinbottlebar.wordpress.com/">kleinbottlebar [/]</a>. My inspirations for science writing and communication include <a href="https://simonsingh.net/">Dr. Simon Singh [/]</a>, <a href="https://www.youtube.com/@BobbyBroccoli/featured">BobbyBroccoli [/]</a>, <a href="https://www.youtube.com/@numberphile">Numberphile [/]</a>, and <a href="https://www.youtube.com/@acollierastro">Dr. Angela Collier [/].</a> Check them out! 
+
+      I try to help edit Wikipedia articles, though not as much as I'd like to! 
       
       ---
 
