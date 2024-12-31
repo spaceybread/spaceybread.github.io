@@ -55,7 +55,7 @@ const tileContent = {
     `,
     "about me": `
       <b><h1 class="header">about me :)</h1></b>
-      <p class="para">Hi! I'm an undergraduate student majoring in mathematics and computer Science at UW-Madison and I'm interested in theoretical computer science which I hope to pursue at a graduate school starting in Fall 2026. I am currently employed as a programmer at Space Science and Engineering Center where I work on products that talk to satellites and process their data! I am also involved with research in secure multi-party computation and soon random number generation. I have taken graduate coursework in algorithms and, soon, in cryptography. If you'd like to learn more about my work, please reach out to me by mail. I try to respond quickly!</p>
+      <p class="para">Hi! I'm an undergraduate student majoring in mathematics and computer Science at UW-Madison and I'm interested in theoretical computer science which I hope to pursue at a graduate school starting in Fall 2026. I am currently employed as a programmer at the Space Science and Engineering Center where I work on products that talk to satellites and process their data! I am also involved with research in secure multi-party computation and soon random number generation. I have taken graduate coursework in algorithms and, soon, in cryptography. If you'd like to learn more about my work, please reach out to me by mail. I try to respond quickly!</p>
     `,
     "contact": `
       <b><h1 class="header">contact</h1></b>
