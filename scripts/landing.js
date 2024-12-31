@@ -1,22 +1,25 @@
 // https://www.schemecolor.com/soft-tones.php
 // const colors = ["#ECC1D1", "#BEAFE1", "#D9B4E2", "#EEE7D3", "#EAD7C3", "#C8D3B8"];
 // https://www.schemecolor.com/dull-autumn-color-palette.php + https://www.schemecolor.com/summer-before-fall.php
-const colors = ["#A9C28C", "#87A766", "#DED8BB", "#CEB38C", "#BB8C68", "#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914", "#AE9618", "#757943"];
+// const colors = ["#A9C28C", "#87A766", "#DED8BB", "#CEB38C", "#BB8C68", "#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914", "#AE9618", "#757943"];
+// filtered colors
+const colors = ["#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914"];
 
 const tileContent = {
     "papers": `
-      <h1>papers</h1>
-      <p>I don't have any publications at the moment, however I am actively working with Prof. Rahul Chatterjee and soon with Prof. Eric Bach to change that. If, for whatever reason, you're interested in my Directed Reading Program presentation or my submission for the Mathematical Contest in Modeling, please send me an email. </p>
+      <h1 class="header">papers</h1>
+      <p class="para">I don't have any publications at the moment, however I am actively working with Prof. Rahul Chatterjee and soon with Prof. Eric Bach to change that. If, for whatever reason, you're interested in my Directed Reading Program presentation or my submission for the Mathematical Contest in Modeling, please send me an email. </p>
       <img src="https://cdn-useast1.kapwing.com/static/templates/this-is-where-id-put-my-trophy-if-i-had-one-meme-template-full-79af6e4e.webp" alt="publication record" style="width: 15vw; min-width: 330px;">
     `,
     "projects": `
-      <h1 style="margin-bottom: 20px; font-size: 24px;">Projects</h1>
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sit amet velit vel elit sodales feugiat.</p>
+      <h1 class="header">projects</h1>
+      <p class="para">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sit amet velit vel elit sodales feugiat.</p>
     `,
     "tiles?": `
-      <h1 style="margin-bottom: 20px; font-size: 24px;">what's with the tiles?</h1>
-      <p>In preparation for grad school applications, I've visited a lot of academic homepages and frankly, most of them are pretty boring. As such, unique websites stick out way more than they usually would and one such website was Prof. Eddie Kohler's old landing page with its random tiles. I really liked the aesthetic and used it as inspiration for this site.</p>
-    `
+      <h1 class="header">what's with the tiles?</h1>
+      <p class="para">In preparation for grad school applications, I've visited a lot of academic homepages and frankly, most of them are pretty boring. As such, unique websites stick out way more than they usually would and one such website was Prof. Eddie Kohler's old landing page with its random tiles. I really liked the aesthetic and used it as inspiration for this site.</p>
+      <p class="para">While the entire stretch from September to December is often called 'fall,' Midwesterners will attest that the true magic lies in a fleeting three-week window. During this time, trees burst into vibrant shades of orange emerging from the green that dominates the summer, and the ground remains blissfully free of fallen leaves. In an attempt to capture this period, the tiles seek to evoke the warmth and colors of a Midwest autumn.</p>
+      `
   };
   
 
@@ -78,7 +81,7 @@ function expandGrid(event) {
   
     expandedBlock.innerHTML = `
         <style>
-            h1 {
+            .header {
                 font-size: 20px;
                 font-family: monospace;
                 margin: 10 0 10px;
@@ -87,7 +90,7 @@ function expandGrid(event) {
                 padding-left: 20px; 
             }
 
-            p {
+            .para {
                 font-size: 16px;
                 font-family: monospace;
                 margin: 10 10 10px;
