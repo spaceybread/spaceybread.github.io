@@ -59,7 +59,7 @@ const tileContent = {
     `,
     "contact": `
       <b><h1 class="header">contact</h1></b>
-      <p class="para">Email: {initial} {last name} {thirty five in decimal} ampersand wisc dot edu
+      <p class="para">Email: {first initial} {last name} {thirty five in decimal} ampersand wisc dot edu
       Github: <a href="https://github.com/spaceybread">/spaceybread</a>
       LinkedIn: <a href="https://www.linkedin.com/in/spaceyloaf/">/spaceyloaf</a>
       Bluesky: <a href="https://bsky.app/profile/spaceybread.bsky.social">@spaceybread.bsky.social</a>
