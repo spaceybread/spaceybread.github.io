@@ -8,8 +8,8 @@ const colors = ["#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914"];
 const tileContent = {
     "papers": `
       <h1 class="header">papers</h1>
-      <p class="para">I don't have any publications at the moment, however I am actively working with Prof. Rahul Chatterjee and soon with Prof. Eric Bach to change that. If, for whatever reason, you're interested in my Directed Reading Program presentation or my submission for the Mathematical Contest in Modeling, please send me an email. </p>
-      <img src="https://cdn-useast1.kapwing.com/static/templates/this-is-where-id-put-my-trophy-if-i-had-one-meme-template-full-79af6e4e.webp" alt="publication record" style="width: 15vw; min-width: 330px;">
+      <p class="para">I don't have any publications at the moment, however I am actively working with <a href="https://pages.cs.wisc.edu/~chatterjee/">Prof. Rahul Chatterjee</a> and soon with <a href="https://pages.cs.wisc.edu/~bach/">Prof. Eric Bach</a> to change that. If, for whatever reason, you're interested in my <a href="https://wiki.math.wisc.edu/index.php/Directed_Reading_Program">Directed Reading Program</a> presentation or my submission for the <a href="https://www.comap.com/contests/mcm-icm">Mathematical Contest in Modeling</a>, please send me an email. </p>
+      <a href="https://www.youtube.com/watch?v=_Tc0C3fhjt0"><img src="https://cdn-useast1.kapwing.com/static/templates/this-is-where-id-put-my-trophy-if-i-had-one-meme-template-full-79af6e4e.webp" alt="publication record" style="width: 15vw; min-width: 330px;"></a>
     `,
     "projects": `
       <h1 class="header">projects</h1>

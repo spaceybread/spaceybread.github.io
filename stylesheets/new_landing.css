@@ -122,3 +122,27 @@ body {
   text-align: center;
   cursor: pointer;
 }
+
+a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:visited {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #32CD32;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:active {
+    color: #32CD32;
+    background-color: transparent;
+    text-decoration: none;
+}

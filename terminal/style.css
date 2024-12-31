@@ -1,0 +1,45 @@
+body {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  /* green -> #00ff00 */
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.terminal {
+  width: 650px;
+  height: 650px;
+  background-color: #000000;
+  border-radius: 8px;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+}
+
+.output {
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+}
+
+.input-line {
+  display: flex;
+  align-items: center;
+}
+
+.prompt {
+  margin-right: 8px;
+}
+
+#command-input {
+  flex-grow: 1;
+  background-color: transparent;
+  color: #ffffff;
+  /* green -> #00ff00 */
+  border: none;
+  font-family: monospace;
+  outline: none;
+}
