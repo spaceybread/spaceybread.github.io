@@ -193,13 +193,23 @@ function expandGrid(event) {
     assignRandomColors();
     isExpanded = false;
   }
+
+  function showMobileWarning() {
+    const mobileWarning = document.getElementById('mobile-warning');
+    if (window.innerWidth < 768) {
+        mobileWarning.style.display = 'block';
+    }
+  }
   
   window.onload = () => {
     shuffleGrid();
     assignRandomColors();
-  
+    showMobileWarning();
+
     const expandableTiles = Array.from(document.querySelectorAll(".expandable"));
     expandableTiles.forEach(tile => {
       tile.addEventListener("click", expandGrid);
     });
   };
+
+  window.onresize = showMobileWarning;
