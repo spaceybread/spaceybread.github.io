@@ -3,7 +3,7 @@ const inputField = document.getElementById("command-input");
 
 const commands = {
   "help": (args) => {
-    return "help - shows available commands\nhello - prints a hello message\ndate - shows current date\necho <message> - echos the given message\nmath add <num1> <num2> - adds two numbers\nmath mult <num1> <num2> - multiply two numbers\nopenl <url> - creates a new tab to the url\nclear - reloads this page";
+    return "========================================================================\nhelp - shows available commands\nhello - prints a hello message\ndate - shows current date\necho <message> - echos the given message\nmath add <num1> <num2> - adds two numbers\nmath mult <num1> <num2> - multiply two numbers\nopenl <url> - creates a new tab to the url\nstructure - directory structure\nclear - reloads this page\nexit - return to home page\n========================================================================";
   },
   "hello": () => "Hello, user!",
   "date": () => new Date().toString(),
@@ -38,9 +38,62 @@ const commands = {
         }
         return "Usage: openl <link>";
     },
+    "exit": () => {
+        window.open("https://spaceybread.github.io/", "_self");
+    },
     "clear": () => {
         location.reload();
     },
+    "structure": () => {
+        return `
+├── elo.html
+├── https:
+├── index.html
+├── mcv.html
+├── md
+│   ├── links.MD
+│   └── todo.MD
+├── media
+│   ├── 8plot.gif
+│   ├── IMG_2165.webp
+│   ├── badApple.gif
+│   ├── db6075.png
+│   ├── enigma_machine.png
+│   ├── icon.ico
+│   ├── idkhowwegothere.jpg
+│   ├── mail_swamp_cropped.png
+│   ├── mand.jpg
+│   ├── mcv
+│   ├── oneko.gif
+│   ├── orbits.gif
+│   ├── sudoku_uncolored_dense.png
+│   └── sudoku_uncolored_dense_square.png
+├── new_bio.html
+├── new_bio.html~
+├── new_bio_2.html
+├── nflelo.html
+├── nfleloranked.html
+├── old_landing.html
+├── pi.html
+├── primeGen.html
+├── robots.txt
+├── rot13.html
+├── scripts
+│   ├── elo.js
+│   ├── landing.js
+│   ├── oneko.js
+│   └── rot13.js
+├── stylesheets
+│   ├── landing.css
+│   ├── mcv.css
+│   ├── new_landing.css
+│   └── styles.css
+└── terminal
+    ├── script.js
+    ├── style.css
+    └── terminal.html
+`
+    }
 };
 
 inputField.addEventListener("keydown", (event) => {
