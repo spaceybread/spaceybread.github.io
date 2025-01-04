@@ -61,7 +61,6 @@ const tileContent = {
       <b><h1 class="header">contact</h1></b>
       <p class="para">Email: {first initial} {last name} {thirty five in decimal} ampersand wisc dot edu
       Github: <a href="https://github.com/spaceybread">/spaceybread</a>
-      LinkedIn: <a href="https://www.linkedin.com/in/spaceyloaf/">/spaceyloaf</a>
       Bluesky: <a href="https://bsky.app/profile/spaceybread.bsky.social">@spaceybread.bsky.social</a>
       Instagram: <a href="https://www.instagram.com/spaceybread0/">/spaceybread0</a>
       
@@ -81,7 +80,7 @@ const tileContent = {
     `,
   };
   
-
+// LinkedIn: <a href="https://www.linkedin.com/in/spaceyloaf/">/spaceyloaf</a>
 function shuffleGrid() {
   const grid = document.getElementById("grid");
   const items = Array.from(grid.children);
