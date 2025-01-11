@@ -77,6 +77,10 @@ const tileContent = {
       ---
 
       “I wish it need not have happened in my time," said Frodo. "So do I," said Gandalf, "and so do all who live to see such times. But that is not for them to decide. All we have to decide is what to do with the time that is given us.” ― J.R.R. Tolkien</p>
+    
+    <iframe id="bucket-webring" style="width: 100%; height: 3rem; border: none;" src="https://webring.bucketfish.me/embed.html?name=Spacey!"></iframe>
+
+
     `,
   };
   
