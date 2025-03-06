@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Countdown</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
+        }
+        #events-container {
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .event {
+            background: white;
+            margin: 10px 0;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .event:hover {
+            transform: translateY(-5px);
+        }
+        .countdown {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div id="events-container">
+        <h1>Upcoming Events</h1>
+    </div>
+
+    <script>
+        async function fetchEvents() {
+            try {
+                const response = await fetch('data/events.json');
+                const events = await response.json();
+                displayEvents(events);
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        }
+
+        function displayEvents(events) {
+            const container = document.getElementById('events-container');
+            container.innerHTML = '<h1>Upcoming Events</h1>';
+
+            const now = new Date();
+
+            events.sort((a, b) => {
+                const timeA = new Date(a.date) - now;
+                const timeB = new Date(b.date) - now;
+                if (timeA < 0 && timeB >= 0) return 1;
+                if (timeA >= 0 && timeB < 0) return -1;
+                return timeA - timeB;
+            });
+
+            events.forEach(event => {
+                const eventDiv = document.createElement('div');
+                eventDiv.className = 'event';
+
+                const title = document.createElement('h2');
+                title.textContent = event.title;
+
+                const place = document.createElement('p');
+                place.textContent = `Place: ${event.place}`;
+
+                const date = document.createElement('p');
+                date.textContent = `Date: ${event.date}`;
+
+                const countdown = document.createElement('p');
+                countdown.className = 'countdown';
+
+                eventDiv.appendChild(title);
+                eventDiv.appendChild(place);
+                eventDiv.appendChild(date);
+                eventDiv.appendChild(countdown);
+
+                container.appendChild(eventDiv);
+
+                updateCountdown(event.date, countdown);
+                setInterval(() => updateCountdown(event.date, countdown), 1000);
+            });
+        }
+
+        function updateCountdown(eventDate, element) {
+            const now = new Date();
+            const targetDate = new Date(eventDate);
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                element.textContent = 'There is another theory which states that this has already happened.';
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            element.textContent = `Time left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        fetchEvents();
+    </script>
+</body>
+</html>
