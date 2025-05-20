@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rayleigh Correction - McIDAS-V</title>
   <style>
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       height: 100%;
-      
+
       overflow: hidden;
     }
 
@@ -36,47 +38,47 @@
     }
 
     .side-block {
-        width: calc(2 * 125px);
-        /* height: 450px; */
-        background-color: #333;
-        color: #fff;
-        padding: 20px;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow-y: auto; 
+      width: calc(2 * 125px);
+      /* height: 450px; */
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
     }
 
     .side-block h1 {
-        font-size: 24px;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 24px;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     .side-block h2 {
-        font-size: 18px;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 18px;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     .side-block hr {
-        width: 200px;
-      }
+      width: 200px;
+    }
 
     .side-block p {
-        font-size: 14px;
-        line-height: 1.5;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     .main-display {
       width: 800px;
       height: 600px;
-      background-color: #444;
+      background-color: #333;
       display: flex;
-      
+
       /* justify-content: center;
       align-items: center; */
     }
@@ -104,22 +106,22 @@
     }
 
     .bottom-rect h1 {
-        font-size: 24px;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 24px;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     .bottom-rect h2 {
-        font-size: 16px;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 16px;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     .bottom-rect p {
-        font-size: 18px;
-        line-height: 2;
-        font-family: monospace;
-        margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 2;
+      font-family: monospace;
+      margin: 0 0 10px;
     }
 
     #display {
@@ -128,62 +130,64 @@
       text-align: center;
     }
   </style>
-    <style>
-      * {
-        box-sizing: border-box;
-      }
-      .img-comp-container {
-        position: relative;
-        height: 200px;
-        color: black; 
-      }
-  
-      .img-comp-img {
-        position: absolute;
-        width: auto;
-        height: auto;
-        overflow: hidden;
-      }
-  
-      .img-comp-img img {
-        display: block;
-        vertical-align: middle;
-      }
-  
-      .img-comp-slider {
-        position: absolute;
-        z-index: 9;
-        cursor: ew-resize;
-        width: 2px;
-        height: 400px;
-        background-color: yellowgreen;
-        opacity: 1.;
-        border-radius: 0%;
-      }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-      img {
-       border: 5px solid #666;
-      }
-      /* Credit for button design: https://uiverse.io/satyamchaudharydev/loud-seahorse-55 */
-      .button {
-        --bg: #000;
-        --hover-bg: lightblue;
-        --hover-text: #000;
-        color: #fff;
-        cursor: pointer;
-        border: 1px solid var(--bg);
-        border-radius: 4px;
-        padding: 0.8em 2em;
-        background: var(--bg);
-        transition: 0.2s;
-      }
+    .img-comp-container {
+      position: relative;
+      height: 200px;
+      color: black;
+    }
 
-      .button:hover {
-        color: var(--hover-text);
-        transform: translate(-0.25rem, -0.25rem);
-        background: var(--hover-bg);
-        box-shadow: 0.25rem 0.25rem var(--bg);
-      }
+    .img-comp-img {
+      position: absolute;
+      width: auto;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .img-comp-img img {
+      display: block;
+      vertical-align: middle;
+    }
+
+    .img-comp-slider {
+      position: absolute;
+      z-index: 9;
+      cursor: ew-resize;
+      width: 2px;
+      height: 590px;
+      background-color: yellowgreen;
+      opacity: 1.;
+      border-radius: 0%;
+    }
+
+    img {
+      border: 5px solid #444;
+    }
+
+    /* Credit for button design: https://uiverse.io/satyamchaudharydev/loud-seahorse-55 */
+    .button {
+      --bg: #000;
+      --hover-bg: lightblue;
+      --hover-text: #000;
+      color: #fff;
+      cursor: pointer;
+      border: 1px solid var(--bg);
+      border-radius: 4px;
+      padding: 0.8em 2em;
+      background: var(--bg);
+      transition: 0.2s;
+    }
+
+    .button:hover {
+      color: var(--hover-text);
+      transform: translate(-0.25rem, -0.25rem);
+      background: var(--hover-bg);
+      box-shadow: 0.25rem 0.25rem var(--bg);
+    }
 
     .button:active {
       transform: translate(0);
@@ -191,37 +195,41 @@
     }
 
     a:link {
-    color: white;
-    background-color: transparent;
-    text-decoration: none;
-  }
+      color: white;
+      background-color: transparent;
+      text-decoration: none;
+    }
 
-  a:visited {
-    color: white;
-    background-color: transparent;
-    text-decoration: none;
-  }
+    a:visited {
+      color: white;
+      background-color: transparent;
+      text-decoration: none;
+    }
 
-  a:hover {
-    color: #32CD32;
-    background-color: transparent;
-    text-decoration: none;
-  }
+    a:hover {
+      color: #32CD32;
+      background-color: transparent;
+      text-decoration: none;
+    }
 
-  a:active {
-    color: #32CD32;
-    background-color: transparent;
-    text-decoration: none;
-}
+    a:active {
+      color: #32CD32;
+      background-color: transparent;
+      text-decoration: none;
+    }
 
-    </style>
-    <script>
-      MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
-      };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    #special_note {
+      font-size: 8px;
+    }
+  </style>
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
+
 <body>
 
   <div class="container">
@@ -231,162 +239,184 @@
         <hr>
         <br>
         <h2> Rayleigh Scattering</h2>
-        <p>Rayleigh Scattering Scattering of electromagnetic waves (like sunlight) due to interactions with molecules of oxygen and nitrogen that are much smaller than its wavelength. This is why the sky looks blue!</p>
-
-        <hr>
+        <p>Rayleigh Scattering Scattering of electromagnetic waves (like sunlight) due to interactions with molecules of
+          oxygen and nitrogen that are much smaller than its wavelength. This is why the sky looks blue!</p>
         <br>
         <h2> Rayleigh Correction</h2>
-        <p>Rayleigh scattering introduces a “haze” especially in visible wavelengths (mostly under 700 nm), which can interfere with interpreting surface reflectance. The removal of this scattering component is thus Rayleigh Correction. </p>
-
+        <p>Rayleigh scattering introduces a “haze” especially in visible wavelengths (mostly under 700 nm), which can
+          interfere with interpreting surface reflectance. The removal of this scattering component is thus Rayleigh
+          Correction. </p>
+        <br>
       </div>
       <div class="container">
-      <div class="main-display">
-        <div class="main-inner"><div class="img-comp-container">
-          <div class="img-comp-img">
-            <img id="img-not-corrected" src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="800" height="600">
+        <div class="main-display">
+          <div class="main-inner">
+            <div class="img-comp-container">
+              <div class="img-comp-img">
+                <img id="img-not-corrected" src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="800" height="600">
+              </div>
+              <div class="img-comp-img img-comp-overlay">
+                <img id="img-corrected" src="Rayleigh_PPT/CONUS_Corrected.jpg" width="800" height="600">
+              </div>
+            </div>
           </div>
-          <div class="img-comp-img img-comp-overlay">
-            <img id="img-corrected" src="Rayleigh_PPT/CONUS_Corrected.jpg" width="800" height="600">
-          </div>
-        </div></div>
-      </div>
-      <div class="bottom-rect">
+        </div>
+        <div class="bottom-rect">
 
 
-        <center>
-          <p>
-            <button class="button" id="prev">&lt;&lt;&lt;</button>
-            <span id="display">Something has gone wrong if you can see this lol</span>
-            <button class="button" id="next">&gt;&gt;&gt;</button>
-          </p>
-        
-      </center>
-        
-  
-      </div> 
-      <div class="bottom-rect">
+          <center>
+            <p>
+              <button class="button" id="prev">&lt;&lt;&lt;</button>
+              <span id="display">Something has gone wrong if you can see this lol</span>
+              <button class="button" id="next">&gt;&gt;&gt;</button>
+            </p>
+
+          </center>
 
 
-        <center>
-          <p>
-            <a href="rayleigh_attr.md">Attribution and Credit [/]</a>
-          </p>
-        
-      </center>
-        
-  
-      </div> 
+        </div>
+        <div class="bottom-rect">
+
+
+          <center>
+            <p>
+              <a href="rayleigh_attr.md">Attribution and Credits [/]</a>
+            </p>
+
+          </center>
+
+
+        </div>
       </div>
       <div class="side-block">
-        <h1>Nerd Stuff</h1>
+        <h1>Equations</h1>
+        <hr>
+        <br>
         <p>
-          $\frac{\pi^2}{6}$
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+          The reflectance, $\rho$, at a point is given by: $$\rho = \tau \cdot P(\Theta) \cdot (\frac{1}{4 \cdot
+          \theta_{sun} \cdot \theta_{sat}})$$ Using: $$P(\Theta) = \frac{3}{4} \cdot (1 + \cos^2(\Theta))$$ $$\tau = P
+          \cdot \tau_{ro} $$From: </p>
+        <p>
+
+          $\cos (\Theta)$ $=$ $\cos (\theta_{sun})$ $\cdot$ $\cos (\theta_{sat})$ $+$ $\sin (\theta_{sun})$ $\cdot$
+          $\sin (\theta_{sat})$ $\cdot$ $\cos(\phi_{sat} - \phi_{sun})$ </p><br>
+        <p>
+
+          $\tau_{ro}$ $=$ $\frac{0.008569}{\lambda^4}$ $\cdot$ $(1 + \frac{0.0113}{\lambda^2}$ $+$
+          $\frac{0.00013}{\lambda^4})$
+        </p><br>
+        <p>
+
+          Using these observed values: $\lambda$ is wavelength
+          $\theta_{sat},$ $\theta_{sun},$ $\phi_{sat},$ and $\phi_{sun}$ are the zenith and azimuth angles respecitvely.
+          $P$ is simply the observed pressure over the atmospheric pressure.
+        </p>
+      </div>
+
     </div>
-    
-  </div>
 
 
-  <script>
-    let places = [
-      { name: "CONUS - SE United States", id: "CONUS" },
-      { name: "The Himalayas", id: "Himalayas" },
-      { name: "The Sahara", id: "Sahara" },
-      { name: "Australia", id: "Australia" },
-      {name: "South America", id: "SouthAmerica"}
+    <script>
+      let places = [
+        { name: "CONUS - SE United States", id: "CONUS" },
+        { name: "The Himalayas", id: "Himalayas" },
+        { name: "The Sahara", id: "Sahara" },
+        { name: "Australia", id: "Australia" },
+        { name: "South America", id: "SouthAmerica" }
 
-    ];
+      ];
 
-    let plc_idx = 0; 
+      let plc_idx = 0;
 
-    const display = document.getElementById("display");
-    const prevBtn = document.getElementById("prev");
-    const nextBtn = document.getElementById("next");
-    const imgCorrected = document.getElementById("img-corrected");
-    const imgNotCorrected = document.getElementById("img-not-corrected");
+      const display = document.getElementById("display");
+      const prevBtn = document.getElementById("prev");
+      const nextBtn = document.getElementById("next");
+      const imgCorrected = document.getElementById("img-corrected");
+      const imgNotCorrected = document.getElementById("img-not-corrected");
 
-    function updateDisplay() {
-      const place = places[plc_idx];
-      display.textContent = place.name;
-      imgCorrected.src = `Rayleigh_PPT/${place.id}_Corrected.jpg`;
-      imgNotCorrected.src = `Rayleigh_PPT/${place.id}_Not_Corrected.jpg`;
-    }
-
-    prevBtn.addEventListener("click", () => {
-      plc_idx = (plc_idx - 1 + places.length) % places.length;
-      updateDisplay();
-    });
-
-    nextBtn.addEventListener("click", () => {
-      plc_idx = (plc_idx + 1) % places.length;
-      updateDisplay();
-    });
-
-    function initComparisons() {
-      const overlays = document.getElementsByClassName("img-comp-overlay");
-      for (let i = 0; i < overlays.length; i++) {
-        compareImages(overlays[i]);
+      function updateDisplay() {
+        const place = places[plc_idx];
+        display.textContent = place.name;
+        imgCorrected.src = `Rayleigh_PPT/${place.id}_Corrected.jpg`;
+        imgNotCorrected.src = `Rayleigh_PPT/${place.id}_Not_Corrected.jpg`;
       }
-  
-      function compareImages(img) {
-        let slider, clicked = 0;
-        const w = img.offsetWidth;
-        const h = img.offsetHeight;
-        img.style.width = (w / 2) + "px";
-  
-        // Remove existing slider if it exists
-        const existingSlider = img.parentElement.querySelector(".img-comp-slider");
-        if (existingSlider) existingSlider.remove();
-  
-        slider = document.createElement("DIV");
-        slider.setAttribute("class", "img-comp-slider");
-        img.parentElement.insertBefore(slider, img);
-        slider.style.top = (h / 2) - (slider.offsetHeight / 2) + "px";
-        slider.style.left = (w / 2) - (slider.offsetWidth / 2) + "px";
-  
-        slider.addEventListener("mousedown", slideReady);
-        window.addEventListener("mouseup", slideFinish);
-        slider.addEventListener("touchstart", slideReady);
-        window.addEventListener("touchend", slideFinish);
-  
-        function slideReady(e) {
-          e.preventDefault();
-          clicked = 1;
-          window.addEventListener("mousemove", slideMove);
-          window.addEventListener("touchmove", slideMove);
+
+      prevBtn.addEventListener("click", () => {
+        plc_idx = (plc_idx - 1 + places.length) % places.length;
+        updateDisplay();
+      });
+
+      nextBtn.addEventListener("click", () => {
+        plc_idx = (plc_idx + 1) % places.length;
+        updateDisplay();
+      });
+
+      function initComparisons() {
+        const overlays = document.getElementsByClassName("img-comp-overlay");
+        for (let i = 0; i < overlays.length; i++) {
+          compareImages(overlays[i]);
         }
-  
-        function slideFinish() {
-          clicked = 0;
-        }
-  
-        function slideMove(e) {
-          if (!clicked) return;
-          const pos = getCursorPos(e);
-          if (pos < 0) return;
-          if (pos > w) return;
-          slide(pos);
-        }
-  
-        function getCursorPos(e) {
-          const rect = img.getBoundingClientRect();
-          const x = (e.changedTouches ? e.changedTouches[0] : e).pageX - rect.left - window.pageXOffset;
-          return x;
-        }
-  
-        function slide(x) {
-          img.style.width = x + "px";
-          slider.style.left = img.offsetWidth - (slider.offsetWidth / 2) + "px";
+
+        function compareImages(img) {
+          let slider, clicked = 0;
+          const w = img.offsetWidth;
+          const h = img.offsetHeight;
+          img.style.width = (w / 2) + "px";
+
+          // Remove existing slider if it exists
+          const existingSlider = img.parentElement.querySelector(".img-comp-slider");
+          if (existingSlider) existingSlider.remove();
+
+          slider = document.createElement("DIV");
+          slider.setAttribute("class", "img-comp-slider");
+          img.parentElement.insertBefore(slider, img);
+          slider.style.top = (h / 2) - (slider.offsetHeight / 2) + "px";
+          slider.style.left = (w / 2) - (slider.offsetWidth / 2) + "px";
+
+          slider.addEventListener("mousedown", slideReady);
+          window.addEventListener("mouseup", slideFinish);
+          slider.addEventListener("touchstart", slideReady);
+          window.addEventListener("touchend", slideFinish);
+
+          function slideReady(e) {
+            e.preventDefault();
+            clicked = 1;
+            window.addEventListener("mousemove", slideMove);
+            window.addEventListener("touchmove", slideMove);
+          }
+
+          function slideFinish() {
+            clicked = 0;
+          }
+
+          function slideMove(e) {
+            if (!clicked) return;
+            const pos = getCursorPos(e);
+            if (pos < 0) return;
+            if (pos > w) return;
+            slide(pos);
+          }
+
+          function getCursorPos(e) {
+            const rect = img.getBoundingClientRect();
+            const x = (e.changedTouches ? e.changedTouches[0] : e).pageX - rect.left - window.pageXOffset;
+            return x;
+          }
+
+          function slide(x) {
+            img.style.width = x + "px";
+            slider.style.left = img.offsetWidth - (slider.offsetWidth / 2) + "px";
+          }
         }
       }
-    }
-  
-    window.onload = () => {
-      initComparisons();
-      updateDisplay();
 
-    };
-  </script>
+      window.onload = () => {
+        initComparisons();
+        updateDisplay();
+
+      };
+    </script>
 
 </body>
+
 </html>
