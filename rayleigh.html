@@ -200,10 +200,10 @@
       <div class="main-display">
         <div class="main-inner"><div class="img-comp-container">
           <div class="img-comp-img">
-            <img src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="1200" height="800">
+            <img id="img-not-corrected" src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="1200" height="800">
           </div>
           <div class="img-comp-img img-comp-overlay">
-            <img src="Rayleigh_PPT/CONUS_Corrected.jpg" width="1200" height="800">
+            <img id="img-corrected" src="Rayleigh_PPT/CONUS_Corrected.jpg" width="1200" height="800">
           </div>
         </div></div>
       </div>
@@ -231,27 +231,39 @@
 
 
   <script>
-    let places = ["CONUS - South East United States", "The Himalayas", "The Sahara"]; 
+    let places = [
+      { name: "CONUS - SE United States", id: "CONUS" },
+      { name: "The Himalayas", id: "Himalayas" },
+      { name: "The Sahara", id: "Sahara" },
+      { name: "Australia", id: "Australia" },
+      {name: "South America", id: "SouthAmerica"}
+
+    ];
+
     let plc_idx = 0; 
 
     const display = document.getElementById("display");
     const prevBtn = document.getElementById("prev");
     const nextBtn = document.getElementById("next");
+    const imgCorrected = document.getElementById("img-corrected");
+    const imgNotCorrected = document.getElementById("img-not-corrected");
+
     function updateDisplay() {
-      display.textContent = places[plc_idx];
+      const place = places[plc_idx];
+      display.textContent = place.name;
+      imgCorrected.src = `Rayleigh_PPT/${place.id}_Corrected.jpg`;
+      imgNotCorrected.src = `Rayleigh_PPT/${place.id}_Not_Corrected.jpg`;
     }
 
     prevBtn.addEventListener("click", () => {
       plc_idx = (plc_idx - 1 + places.length) % places.length;
-    updateDisplay();
+      updateDisplay();
     });
-
 
     nextBtn.addEventListener("click", () => {
       plc_idx = (plc_idx + 1) % places.length;
       updateDisplay();
     });
-
 
     function initComparisons() {
       const overlays = document.getElementsByClassName("img-comp-overlay");
