@@ -26,7 +26,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 17.5px;
     }
 
     .top-row {
@@ -36,7 +36,7 @@
     }
 
     .side-block {
-        width: calc(2 * 150px);
+        width: calc(2 * 125px);
         /* height: 450px; */
         background-color: #333;
         color: #fff;
@@ -54,6 +54,16 @@
         margin: 0 0 10px;
     }
 
+    .side-block h2 {
+        font-size: 18px;
+        font-family: monospace;
+        margin: 0 0 10px;
+    }
+
+    .side-block hr {
+        width: 200px;
+      }
+
     .side-block p {
         font-size: 14px;
         line-height: 1.5;
@@ -62,8 +72,8 @@
     }
 
     .main-display {
-      width: 1200px;
-      height: 800px;
+      width: 800px;
+      height: 600px;
       background-color: #444;
       display: flex;
       
@@ -84,14 +94,13 @@
     }
 
     .bottom-rect {
-      width: 1840px;
-      height: 80px;
+      width: 800px;
+      height: 55px;
       display: flex;
-      gap: 20px;
       justify-content: center;
       background-color: #333;
       color: #fff;
-      padding: 20px;
+      padding: 9px;
     }
 
     .bottom-rect h1 {
@@ -115,7 +124,7 @@
 
     #display {
       display: inline-block;
-      width: 500px;
+      width: 600px;
       text-align: center;
     }
   </style>
@@ -181,6 +190,30 @@
       box-shadow: none;
     }
 
+    a:link {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:visited {
+    color: white;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #32CD32;
+    background-color: transparent;
+    text-decoration: none;
+  }
+
+  a:active {
+    color: #32CD32;
+    background-color: transparent;
+    text-decoration: none;
+}
+
     </style>
     <script>
       MathJax = {
@@ -195,38 +228,62 @@
     <div class="top-row">
       <div class="side-block">
         <h1>Rayleigh Correction in McIDAS-V</h1>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+        <hr>
+        <br>
+        <h2> Rayleigh Scattering</h2>
+        <p>Rayleigh Scattering Scattering of electromagnetic waves (like sunlight) due to interactions with molecules of oxygen and nitrogen that are much smaller than its wavelength. This is why the sky looks blue!</p>
+
+        <hr>
+        <br>
+        <h2> Rayleigh Correction</h2>
+        <p>Rayleigh scattering introduces a “haze” especially in visible wavelengths (mostly under 700 nm), which can interfere with interpreting surface reflectance. The removal of this scattering component is thus Rayleigh Correction. </p>
+
       </div>
+      <div class="container">
       <div class="main-display">
         <div class="main-inner"><div class="img-comp-container">
           <div class="img-comp-img">
-            <img id="img-not-corrected" src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="1200" height="800">
+            <img id="img-not-corrected" src="Rayleigh_PPT/CONUS_Not_Corrected.jpg" width="800" height="600">
           </div>
           <div class="img-comp-img img-comp-overlay">
-            <img id="img-corrected" src="Rayleigh_PPT/CONUS_Corrected.jpg" width="1200" height="800">
+            <img id="img-corrected" src="Rayleigh_PPT/CONUS_Corrected.jpg" width="800" height="600">
           </div>
         </div></div>
       </div>
-      <div class="side-block">
-        <p>
-          
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      <div class="bottom-rect">
+
+
+        <center>
+          <p>
+            <button class="button" id="prev">&lt;&lt;&lt;</button>
+            <span id="display">Something has gone wrong if you can see this lol</span>
+            <button class="button" id="next">&gt;&gt;&gt;</button>
+          </p>
+        
+      </center>
+        
+  
+      </div> 
+      <div class="bottom-rect">
+
+
+        <center>
+          <p>
+            <a href="rayleigh_attr.md">Attribution and Credit [/]</a>
+          </p>
+        
+      </center>
+        
+  
+      </div> 
       </div>
-    </div>
-    <div class="bottom-rect">
-
-
-      <center>
+      <div class="side-block">
+        <h1>Nerd Stuff</h1>
         <p>
-          <button class="button" id="prev">&lt;&lt;&lt;</button>
-          <span id="display">Current Display</span>
-          <button class="button" id="next">&gt;&gt;&gt;</button>
-        </p>
-      
-    </center>
-      
-
-    </div> 
+          $\frac{\pi^2}{6}$
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+    </div>
+    
   </div>
 
 
