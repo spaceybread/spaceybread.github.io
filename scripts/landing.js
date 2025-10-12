@@ -3,12 +3,12 @@
 // https://www.schemecolor.com/dull-autumn-color-palette.php + https://www.schemecolor.com/summer-before-fall.php
 // const colors = ["#A9C28C", "#87A766", "#DED8BB", "#CEB38C", "#BB8C68", "#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914", "#AE9618", "#757943"];
 // filtered colors
-const colors = ["#975450", "#994B26", "#F46C06", "#F49E2D", "#F6B914"];
+const colors = ["#975450", "#994B26", "#F46C06", "#F49E2D"];
 const colors_exp = ["#975450", "#994B26"];
 
 const tileFiles = {
   "papers": "tiles/papers.html",
-  "projects": "tiles/projects.html",
+  "rayleigh": "tiles/projects.html",
   "tiles?": "tiles/tiles.html",
   "research": "tiles/research.html",
   "about me": "tiles/about_new.html",
