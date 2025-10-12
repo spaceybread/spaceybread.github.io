@@ -154,8 +154,8 @@ function expandGrid(event) {
       item.style.display = "";
     });
   
-    shuffleGrid();
-    assignRandomColors();
+    // shuffleGrid();
+    // assignRandomColors();
     isExpanded = false;
   }
 
