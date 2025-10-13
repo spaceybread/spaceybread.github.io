@@ -32,6 +32,59 @@
       <a href="mailto:ansh@cs.wisc.edu" style="font-size: 14px;">Email</a>
       <a href="https://github.com/spaceybread" style="font-size: 14px;">Github</a>
     </div>
+
+    <div id="tm-container">
+      <pre id="tm-output"></pre>
+    </div>
+    
+    <script>
+    const tape = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0'];
+    let head = 3;
+    let state = 'A';
+    const output = document.getElementById('tm-output');
+    
+    const delta = {
+      'A_0': ['1', 'R', 'B'],
+      'A_1': ['1', 'R', 'HALT'],
+      'B_0': ['0', 'R', 'C'],
+      'B_1': ['1', 'R', 'B'],
+      'C_0': ['1', 'L', 'C'],
+      'C_1': ['1', 'L', 'A']
+    };
+    
+    function renderTape() {
+      let tapeStr = tape.map((s, i) => (i === head ? `[${s}]` : ` ${s} `)).join('');
+      return `BB(3) State: ${state}\nTape: ${tapeStr}`;
+    }
+    
+    function step() {
+      if (state === 'halt') return;
+    
+      const key = `${state}_${tape[head]}`;
+      const trans = delta[key];
+    
+      if (!trans) {
+        state = 'HALT';
+        output.textContent = renderTape();
+        return;
+      }
+    
+      const [newSymbol, move, newState] = trans;
+      tape[head] = newSymbol;
+      head += move === 'R' ? 1 : -1;
+      if (head < 0) { tape.unshift('0'); head = 0; }
+      if (head >= tape.length) tape.push('0');
+      state = newState;
+    
+      output.textContent = renderTape();
+    
+      setTimeout(step, 800);
+    }
+    
+
+    output.textContent = renderTape();
+    setTimeout(step, 1200);
+    </script>
   </main>
 </body>
 </html>

@@ -89,3 +89,19 @@ h2 {
   margin-bottom: 1.5rem;
 }
 
+#tm-container {
+  margin-top: 2rem;
+  font-family: 'Fira Code', monospace;
+  background-color: #111;
+  border: 1px solid #333;
+  padding: 1rem;
+  border-radius: 6px;
+  color: #32CD32;
+  white-space: pre;
+  max-width: 650px;
+}
+
+#tm-output {
+  margin: 0;
+}
+
