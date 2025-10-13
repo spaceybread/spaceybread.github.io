@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
+
+body {
+  font-family: 'Fira Code', monospace;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  margin: 0;
+  padding: 2rem;
+  line-height: 1.6;
+}
+
+header {
+  margin-bottom: 3rem;
+}
+
+.symbol {
+  color: #aaa;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+h1 a {
+  text-decoration: none;
+  color: #fff;
+}
+
+nav {
+  margin-top: 0.8rem;
+}
+
+nav a {
+  margin-right: 1.5rem;
+  color: #ccc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+nav a.active {
+  color: #32CD32;
+}
+
+nav a:hover {
+  color: #32CD32;
+}
+
+main {
+  max-width: 700px;
+}
+
+a {
+  color: #32CD32;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.links {
+  margin-top: 1rem;
+  font-size: 1.3rem;
+}
+
+.links a {
+  margin-right: 0.75rem;
+  color: #32CD32;
+}
+
+h2 {
+  font-size: 1.4rem;
+  color: #fff;
+  margin-top: 2rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.3rem;
+}
+
+.date {
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.news-item {
+  margin-bottom: 1.5rem;
+}
+
