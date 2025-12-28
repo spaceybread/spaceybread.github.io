@@ -32,8 +32,8 @@ const SHAPE_COLORS = {
 const COLS = canvas.width / TILESIZE;
 const ROWS = canvas.height / TILESIZE;
 
-// const SHAPES = new Set(["O", "I", "J", "L", "S", "Z", "T"]);  
-const SHAPES = new Set([ "J", "L", "T"]);  
+const SHAPES = new Set(["O", "I", "J", "L", "S", "Z", "T"]);  
+// const SHAPES = new Set([ "J", "L", "T"]);  
 
 let frameStep = 0; 
 let updateMod = 32; 
