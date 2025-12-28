@@ -1049,6 +1049,12 @@ window.addEventListener("keydown", e => {
     }
 });
 
+window.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown") {
+        frameStep = updateMod - 1; 
+    }
+});
+
 
 window.addEventListener("keydown", e => {
     // lol didnt think to use .lowercase earlier
