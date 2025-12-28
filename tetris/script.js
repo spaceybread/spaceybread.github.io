@@ -32,7 +32,8 @@ const SHAPE_COLORS = {
 const COLS = canvas.width / TILESIZE;
 const ROWS = canvas.height / TILESIZE;
 
-const SHAPES = new Set(["O", "I", "J", "L", "S", "Z", "T"]);  
+// const SHAPES = new Set(["O", "I", "J", "L", "S", "Z", "T"]);  
+const SHAPES = new Set([ "J", "L", "T"]);  
 
 let frameStep = 0; 
 let updateMod = 32; 
@@ -445,7 +446,7 @@ class TetrominoJ extends Tetromino {
         occupiedGrids.delete(`${this.tiles[3].x / TILESIZE},${this.tiles[3].y / TILESIZE}`); 
         if (nextState % 2 == 0) {
 
-            if (nextState % 4 == 0) {
+            if (nextState % 4 === 0) {
                 if (this.toVertical(occupiedGrids.has(`${(pivotTile.x - TILESIZE)},${(pivotTile.y - TILESIZE)}`)) === -1) return;
                 this.tiles[3] = new SquareTile((pivotTile.x - TILESIZE), (pivotTile.y - TILESIZE), pivotTile.color); 
             } else {
@@ -455,7 +456,7 @@ class TetrominoJ extends Tetromino {
             
 
         } else {            
-            if (nextState % 4 == 1) {
+            if (nextState % 4 === 1) {
                 if (this.toHorizontal(occupiedGrids.has(`${(pivotTile.x + TILESIZE)},${(pivotTile.y - TILESIZE)}`)) === -1) return;
                 this.tiles[3] = new SquareTile((pivotTile.x + TILESIZE), (pivotTile.y - TILESIZE), pivotTile.color); 
             } else {
@@ -1036,16 +1037,6 @@ window.addEventListener("keydown", e => {
     }
 });
 
-window.addEventListener("keydown", e => {
-    if (e.key === "a") {
-        for (const tetro of allTetros) {
-            if (tetro.isActive) {
-                tetro.rotate(-1);
-                break;
-            }
-        }
-    }
-});
 
 window.addEventListener("keydown", e => {
     if (e.key === "D") {
@@ -1058,16 +1049,6 @@ window.addEventListener("keydown", e => {
     }
 });
 
-window.addEventListener("keydown", e => {
-    if (e.key === "A") {
-        for (const tetro of allTetros) {
-            if (tetro.isActive) {
-                tetro.rotate(-1);
-                break;
-            }
-        }
-    }
-});
 
 window.addEventListener("keydown", e => {
     // lol didnt think to use .lowercase earlier
