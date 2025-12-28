@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Tetris!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background: #0b0b0b;
+            color: #eaeaea;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .game-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        canvas {
+            border: 4px solid #555;
+            background: black;
+        }
+
+        .panel {
+            width: 220px;
+            padding: 16px;
+            background: #111;
+            border: 4px solid #555;
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(0,255,255,0.2);
+        }
+
+        .panel h2 {
+            text-align: center;
+            margin-bottom: 14px;
+            color: cyan;
+            letter-spacing: 2px;
+            font-size: 24px;
+        }
+
+        .stat {
+            background: #000;
+            border: 2px solid #333;
+            padding: 12px 6px;
+            margin-bottom: 14px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .big {
+            margin-top: 8px;
+            font-size: 18px;
+            color: #00ffff;
+            text-shadow: 0 0 8px cyan;
+        }
+
+        .flash {
+            animation: flash 0.25s steps(2);
+        }
+
+        .pop {
+            animation: pop 0.2s steps(2);
+        }
+
+        .bag-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .bag-item {
+            width: 36px;
+            height: 36px;
+            background: #000;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .bag-item.available {
+            color: white;
+            border-color: cyan;
+            box-shadow: 0 0 6px cyan;
+        }
+
+        .bag-item.used {
+            color: #444;
+            border-color: #222;
+        }
+
+
+        @keyframes flash {
+            0% { background: #003333; }
+            100% { background: #000; }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="game-wrapper">
+        <canvas id="box1canvas" height="1100" width="600"></canvas>
+
+        <div class="panel">
+            <h2>TETRIS</h2>
+
+            <div class="stat">
+                SCORE
+                <div id="score" class="big">0</div>
+            </div>
+
+            <div class="stat">
+                LINES
+                <div id="lines">0</div>
+            </div>
+
+            <div class="stat">
+                LEVEL
+                <div id="level">1</div>
+            </div>
+
+            <div class="stat">
+                BAG
+                <div id="bag" class="bag-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js" type="module" defer></script>
+</body>
+</html>
