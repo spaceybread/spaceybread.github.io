@@ -39,7 +39,7 @@ let discardRefresh = 10;
 let gameStageModifier = 1; 
 
 let shootTimer = 0;
-let shootInterval = 2;
+let shootInterval = 1.5;
 
 let items = [];
 
