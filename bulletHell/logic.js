@@ -26,8 +26,8 @@ let playerHealth = 100;
 let bullets = [];
 let mouseWorld = { x: 0, y: 0 };
 const BULLET_SPEED = 500;
-let bulletDamage = 25;
-const ENEMY_MAX_HEALTH = 100;
+let bulletDamage = 40;
+let enemyMaxHealth = 100;
 let maxPlayerHealth = 100;
 let bulletCountModifier = 1; 
 
@@ -473,7 +473,7 @@ function spawnEnemies(delta) {
             x: player.x + Math.cos(angle) * dist,
             y: player.y + Math.sin(angle) * dist,
             size: 14,
-            health: ENEMY_MAX_HEALTH
+            health: enemyMaxHealth * gameStageModifier
         });
     }
 }
@@ -587,7 +587,7 @@ export function getState() {
         lastHandUpdate = timeScore; 
     }
 
-    gameStageModifier = 1 + (Math.floor(timeScore / 30)) / 10; 
+    gameStageModifier = 1 + (Math.floor(timeScore / 7.5)) / 10; 
 
 
     let nearestDir = null;
