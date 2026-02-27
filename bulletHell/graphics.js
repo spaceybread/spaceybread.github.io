@@ -250,11 +250,50 @@ function drawCard(x, y, w, h, card, isSelected) {
 }
 
 export function drawBullets(bullets, camera) {
-    ctx.fillStyle = "yellow";
     for (const b of bullets) {
+        const sx = b.x - camera.x;
+        const sy = b.y - camera.y;
+
+        ctx.save();
+        ctx.shadowColor = "#ffaa00";
+        ctx.shadowBlur = 15;
+
         ctx.beginPath();
-        ctx.arc(b.x - camera.x, b.y - camera.y, 4, 0, Math.PI * 2);
+        ctx.arc(sx, sy, 7, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255, 180, 0, 0.3)";
         ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffdd00";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+
+        ctx.restore();
+
+        const speed = Math.hypot(b.vx, b.vy);
+        if (speed > 0) {
+            const nx = b.vx / speed;
+            const ny = b.vy / speed;
+            const grad = ctx.createLinearGradient(
+                sx, sy,
+                sx - nx * 18, sy - ny * 18
+            );
+            grad.addColorStop(0, "rgba(255, 200, 0, 0.6)");
+            grad.addColorStop(1, "rgba(255, 100, 0, 0)");
+
+            ctx.beginPath();
+            ctx.moveTo(sx + ny * 2, sy - nx * 2);
+            ctx.lineTo(sx - ny * 2, sy + nx * 2);
+            ctx.lineTo(sx - nx * 18, sy - ny * 18);
+            ctx.closePath();
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
     }
 }
 
@@ -293,6 +332,71 @@ export function drawItems(items, camera) {
             ctx.font = "bold 12px monospace";
             ctx.textAlign = "center";
             ctx.fillText("★", sx, sy + 5);
+        }
+    }
+}
+
+export function drawParticles(particles, camera) {
+    for (const p of particles) {
+        const alpha = p.life / p.maxLife;
+        const sx = p.x - camera.x;
+        const sy = p.y - camera.y;
+
+        if (p.type === "bolt") {
+            ctx.save();
+            ctx.shadowColor = "#00aaff";
+            ctx.shadowBlur = 30;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(p.x1 - camera.x, p.y1 - camera.y);
+            ctx.lineTo(p.x2 - camera.x, p.y2 - camera.y);
+            ctx.stroke();
+            ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.6})`;
+            ctx.lineWidth = 10;
+            ctx.stroke();
+            ctx.restore();
+            continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size * 4, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0, 180, 255, ${alpha * 0.5})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.shadowColor = "#00ccff";
+        ctx.shadowBlur = 40;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 150, 255, ${alpha * 0.6})`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(180, 230, 255, ${alpha})`;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.size * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.fill();
+        ctx.restore();
+
+        if (alpha > 0.5) {
+            ctx.save();
+            ctx.strokeStyle = `rgba(255, 255, 255, ${(alpha - 0.5) * 2})`;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = "#00aaff";
+            ctx.shadowBlur = 15;
+            const flare = p.size * 4;
+            ctx.beginPath();
+            ctx.moveTo(sx - flare, sy); ctx.lineTo(sx + flare, sy);
+            ctx.moveTo(sx, sy - flare); ctx.lineTo(sx, sy + flare);
+            ctx.stroke();
+            ctx.restore();
         }
     }
 }
@@ -404,9 +508,9 @@ export function drawPauseScreen(state) {
         ["",                "Low card x3: +1 hand & discard"],
         ["Flush",           "+max health (by high card value)"],
         ["Straight",        "+bullets (by low card value)"],
-        ["Three of a Kind", "+bullet damage (by high card value)"],
+        ["Three of a Kind", "xbullet damage (by high card value)"],
         ["Two Pair",        "+player speed (by pair value)"],
-        ["Pair",            "+fire rate (by pair value)"],
+        ["Pair",            "xfire rate (by pair value)"],
         ["High Card",       "Heal (by high card value)"],
     ];
     
@@ -621,4 +725,89 @@ export function drawHandPreview(hand, selected) {
     ctx.fillStyle = "#FFD700";
     ctx.fillText(`▶ ${handName}`, canvas.width / 2, canvas.height - 150);
     ctx.shadowBlur = 0;
+}
+
+export function drawPlayerSelectScreen(selectedChoice) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.textAlign = "center";
+    ctx.font = "bold 52px monospace";
+    ctx.fillStyle = "#FFD700";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 12;
+    ctx.fillText("CHOOSE YOUR STYLE", canvas.width / 2, canvas.height / 2 - 160);
+    ctx.shadowBlur = 0;
+
+    const options = [
+        {
+            key: "shooter",
+            title: "SHOOTER",
+            desc: "Fires bullets at the nearest enemy",
+            icon: "X",
+        },
+        {
+            key: "bolter",
+            title: "BOLTER",
+            desc: "Zaps a random enemy in range instantly",
+            icon: "Z",
+        },
+    ];
+
+    const cardW = 220;
+    const cardH = 200;
+    const spacing = 60;
+    const totalW = options.length * cardW + (options.length - 1) * spacing;
+    const startX = canvas.width / 2 - totalW / 2;
+    const cardY = canvas.height / 2 - cardH / 2;
+
+    options.forEach((opt, i) => {
+        const x = startX + i * (cardW + spacing);
+        const isActive = opt.key === selectedChoice;
+
+        ctx.save();
+        if (isActive) {
+            ctx.shadowColor = "#FFD700";
+            ctx.shadowBlur = 30;
+        }
+
+        ctx.fillStyle = isActive ? "#1a1a2e" : "#111";
+        ctx.fillRect(x, cardY, cardW, cardH);
+
+        ctx.strokeStyle = isActive ? "#FFD700" : "rgba(255,255,255,0.2)";
+        ctx.lineWidth = isActive ? 3 : 1;
+        ctx.strokeRect(x, cardY, cardW, cardH);
+        ctx.restore();
+
+        ctx.font = "48px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(opt.icon, x + cardW / 2, cardY + 65);
+
+        ctx.font = `bold 22px monospace`;
+        ctx.fillStyle = isActive ? "#FFD700" : "white";
+        ctx.fillText(opt.title, x + cardW / 2, cardY + 110);
+
+        ctx.font = "13px monospace";
+        ctx.fillStyle = "#aaa";
+
+        const words = opt.desc.split(" ");
+        let line = "";
+        let lineY = cardY + 140;
+        for (const word of words) {
+            const test = line + word + " ";
+            if (ctx.measureText(test).width > cardW - 20 && line !== "") {
+                ctx.fillText(line.trim(), x + cardW / 2, lineY);
+                line = word + " ";
+                lineY += 18;
+            } else {
+                line = test;
+            }
+        }
+        ctx.fillText(line.trim(), x + cardW / 2, lineY);
+    });
+
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#aaa";
+    ctx.textAlign = "center";
+    ctx.fillText("← → to choose · Enter to confirm", canvas.width / 2, canvas.height / 2 + cardH / 2 + 40);
 }

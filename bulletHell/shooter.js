@@ -33,8 +33,8 @@ let bulletCountModifier = 1;
 
 let maxHands = 5; 
 let maxDiscards = 3; 
-let handRefresh = 30; 
-let discardRefresh = 20; 
+let handRefresh = 15; 
+let discardRefresh = 10; 
 
 let gameStageModifier = 1; 
 
@@ -137,32 +137,56 @@ export function initLogic(c) {
     bullets = [];
     items = [];
 
-    document.addEventListener("keydown", e => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key.toLowerCase() === "h") {
-            if (!gameOver) {
-                paused = !paused;
-                if (paused) {
-                    pausedAt = performance.now();
-                } else {
-                    totalPausedTime += performance.now() - pausedAt;
-                }
+    // document.addEventListener("keydown", e => {
+    //     keys[e.key.toLowerCase()] = true;
+    //     if (e.key.toLowerCase() === "h") {
+    //         if (!gameOver) {
+    //             paused = !paused;
+    //             if (paused) {
+    //                 pausedAt = performance.now();
+    //             } else {
+    //                 totalPausedTime += performance.now() - pausedAt;
+    //             }
+    //         }
+    //     }
+    // })
+
+    // document.addEventListener("mousemove", e => {
+    //     mouseWorld.x = e.clientX + camera.x;
+    //     mouseWorld.y = e.clientY + camera.y;
+    // });
+
+    // // document.addEventListener("click", shootBullet);
+
+    // document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    // document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+    // document.addEventListener("keydown", handleCardInput);
+
+
+}
+
+export function handleKeyDown(e) {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === "h") {
+        if (!gameOver) {
+            paused = !paused;
+            if (paused) {
+                pausedAt = performance.now();
+            } else {
+                totalPausedTime += performance.now() - pausedAt;
             }
         }
-    })
+    }
+    handleCardInput(e);
+}
 
-    document.addEventListener("mousemove", e => {
-        mouseWorld.x = e.clientX + camera.x;
-        mouseWorld.y = e.clientY + camera.y;
-    });
+export function handleKeyUp(e) {
+    keys[e.key.toLowerCase()] = false;
+}
 
-    // document.addEventListener("click", shootBullet);
-
-    document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-    document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-    document.addEventListener("keydown", handleCardInput);
-
-
+export function handleMouseMove(e) {
+    mouseWorld.x = e.clientX + camera.x;
+    mouseWorld.y = e.clientY + camera.y;
 }
 
 function handleCardInput(e) {
@@ -670,6 +694,8 @@ export function getState() {
         draft,
         invincible,
         tempEffects: tempEffects.map(e => ({ timer: e.timer, isShield: e.isShield })),
+        particles: [],
+        playerChoice: "shooter"
     };
 }
 

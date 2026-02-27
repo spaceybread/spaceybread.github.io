@@ -19,27 +19,28 @@ let lastDiscardUpdate = 0;
 let remHands = 5; 
 let lastHandUpdate = 0;
 let playedHand = "None!"; 
-
+let particles = [];
+const SHOOT_RADIUS = 600;
 let maxHandSize = 7;
 
 let playerHealth = 100;
 let bullets = [];
 let mouseWorld = { x: 0, y: 0 };
 const BULLET_SPEED = 750;
-let bulletDamage = 40;
+let bulletDamage = 100;
 let enemyMaxHealth = 100;
 let maxPlayerHealth = 100;
 let bulletCountModifier = 1; 
 
 let maxHands = 5; 
 let maxDiscards = 3; 
-let handRefresh = 30; 
-let discardRefresh = 20; 
+let handRefresh = 15; 
+let discardRefresh = 10; 
 
 let gameStageModifier = 1; 
 
 let shootTimer = 0;
-let shootInterval = 2;
+let shootInterval = 3;
 
 let items = [];
 
@@ -136,33 +137,56 @@ export function initLogic(c) {
     playerHealth = 100;
     bullets = [];
     items = [];
+// document.addEventListener("keydown", e => {
+    //     keys[e.key.toLowerCase()] = true;
+    //     if (e.key.toLowerCase() === "h") {
+    //         if (!gameOver) {
+    //             paused = !paused;
+    //             if (paused) {
+    //                 pausedAt = performance.now();
+    //             } else {
+    //                 totalPausedTime += performance.now() - pausedAt;
+    //             }
+    //         }
+    //     }
+    // })
 
-    document.addEventListener("keydown", e => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key.toLowerCase() === "h") {
-            if (!gameOver) {
-                paused = !paused;
-                if (paused) {
-                    pausedAt = performance.now();
-                } else {
-                    totalPausedTime += performance.now() - pausedAt;
-                }
+    // document.addEventListener("mousemove", e => {
+    //     mouseWorld.x = e.clientX + camera.x;
+    //     mouseWorld.y = e.clientY + camera.y;
+    // });
+
+    // // document.addEventListener("click", shootBullet);
+
+    // document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    // document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+    // document.addEventListener("keydown", handleCardInput);
+
+
+}
+
+export function handleKeyDown(e) {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === "h") {
+        if (!gameOver) {
+            paused = !paused;
+            if (paused) {
+                pausedAt = performance.now();
+            } else {
+                totalPausedTime += performance.now() - pausedAt;
             }
         }
-    })
+    }
+    handleCardInput(e);
+}
 
-    document.addEventListener("mousemove", e => {
-        mouseWorld.x = e.clientX + camera.x;
-        mouseWorld.y = e.clientY + camera.y;
-    });
+export function handleKeyUp(e) {
+    keys[e.key.toLowerCase()] = false;
+}
 
-    // document.addEventListener("click", shootBullet);
-
-    document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-    document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-    document.addEventListener("keydown", handleCardInput);
-
-
+export function handleMouseMove(e) {
+    mouseWorld.x = e.clientX + camera.x;
+    mouseWorld.y = e.clientY + camera.y;
 }
 
 function handleCardInput(e) {
@@ -234,30 +258,21 @@ function handleCardInput(e) {
 function shootBullet() {
     if (enemies.length === 0) return;
 
-    let nearest = null;
-    let nearestDist = Infinity;
-    for (const e of enemies) {
-        const dist = Math.hypot(e.x - player.x, e.y - player.y);
-        if (dist < nearestDist) {
-            nearestDist = dist;
-            nearest = e;
-        }
-    }
-
-    const dx = nearest.x - player.x;
-    const dy = nearest.y - player.y;
-    const len = Math.hypot(dx, dy);
+    const inRange = enemies.filter(e => Math.hypot(e.x - player.x, e.y - player.y) < SHOOT_RADIUS);
+    if (inRange.length === 0) return;
 
     for (let i = 0; i < bulletCountModifier; i++) {
-        let dir = (i % 2 === 0) ? -1 : 1;
-        const spreadDx = dx + dir * i * 20;
-        const spreadLen = Math.hypot(spreadDx, dy);
-        bullets.push({
-            x: player.x,
-            y: player.y,
-            vx: (spreadDx / spreadLen) * BULLET_SPEED,
-            vy: (dy / spreadLen) * BULLET_SPEED,
-            life: 2
+        const target = inRange[Math.floor(Math.random() * inRange.length)];
+        target.health -= bulletDamage;
+        target.hitTimer = HIT_FLASH_DURATION;
+
+        particles.push({
+            type: "bolt",
+            x1: player.x, y1: player.y,
+            x2: target.x, y2: target.y,
+            x: target.x, y: target.y,
+            life: 0.1, maxLife: 0.1,
+            vx: 0, vy: 0, size: 0
         });
     }
 }
@@ -458,6 +473,15 @@ export function updateLogic(delta) {
         return true;
     });
 
+    particles = particles.filter(p => {
+        p.x += p.vx * delta;
+        p.y += p.vy * delta;
+        p.vx *= 0.92;
+        p.vy *= 0.92;
+        p.life -= delta;
+        return p.life > 0;
+    });
+
     spawnEnemies(delta);
     updateEnemies(delta);
     updateBullets(delta);
@@ -524,6 +548,18 @@ function updateBullets(delta) {
                 items.push({ x: e.x, y: e.y, type });
             } else if (Math.random() < 0.05) {
                 items.push({ x: e.x, y: e.y, type: "draft" });
+            }
+            for (let i = 0; i < 12; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 80 + Math.random() * 120;
+                particles.push({
+                    x: e.x, y: e.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 0.4 + Math.random() * 0.3,
+                    maxLife: 0.7,
+                    size: 3 + Math.random() * 4,
+                });
             }
             return false;
         }
@@ -622,16 +658,16 @@ export function getState() {
 
 
     let nearestDir = null;
-    if (enemies.length > 0) {
-        let nearest = enemies.reduce((best, e) => {
-            return Math.hypot(e.x - player.x, e.y - player.y) < 
-                Math.hypot(best.x - player.x, best.y - player.y) ? e : best;
-        }, enemies[0]);
-        const ddx = nearest.x - player.x;
-        const ddy = nearest.y - player.y;
-        const dlen = Math.hypot(ddx, ddy);
-        nearestDir = { x: ddx / dlen, y: ddy / dlen };
-    }
+    // if (enemies.length > 0) {
+    //     let nearest = enemies.reduce((best, e) => {
+    //         return Math.hypot(e.x - player.x, e.y - player.y) < 
+    //             Math.hypot(best.x - player.x, best.y - player.y) ? e : best;
+    //     }, enemies[0]);
+    //     const ddx = nearest.x - player.x;
+    //     const ddy = nearest.y - player.y;
+    //     const dlen = Math.hypot(ddx, ddy);
+    //     nearestDir = { x: ddx / dlen, y: ddy / dlen };
+    // }
     
 
     return {
@@ -670,6 +706,8 @@ export function getState() {
         draft,
         invincible,
         tempEffects: tempEffects.map(e => ({ timer: e.timer, isShield: e.isShield })),
+        particles,
+        playerChoice: "bolter",
     };
 }
 
@@ -715,4 +753,5 @@ export function restartGame() {
     draft = null;
     tempEffects = [];
     invincible = false;
+    particles = []; 
 }
