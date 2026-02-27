@@ -53,7 +53,7 @@ let totalPausedTime = 0;
 let playerHitTimer = 0;
 const HIT_FLASH_DURATION = 0.15;
 let enemiesKilled = 0;
-let currentStreak = 9;
+let currentStreak = 0;
 
 function sortHand() {
     hand.sort((b, a) => a.value - b.value);
