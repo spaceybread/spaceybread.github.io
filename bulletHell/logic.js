@@ -314,7 +314,7 @@ function scoreSelectedCards(cards) {
             score += ect * 256; 
             maxHandSize += 2; 
             bulletCountModifier += cards[4].value;
-            shootInterval = Math.min(0.1, shootInterval - 0.4); 
+            shootInterval = Math.max(0.1, shootInterval - 0.4); 
             enemies = []; 
             addNotification("Royal Flush", "Screen cleared · +2 hand size · +bullets · +fire rate");
 
