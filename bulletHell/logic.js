@@ -59,8 +59,8 @@ let draft = null;
 
 const POWERUPS = [
     { name: "Speed Boost",    desc: "+50 speed for 10s",   apply: () => { playerSpeed += 50;  addTempEffect(() => playerSpeed -= 50,  10); } },
-    { name: "Rapid Fire",     desc: "2x fire rate for 8s", apply: () => { shootInterval /= 2; addTempEffect(() => shootInterval *= 2,  8); } },
-    { name: "Double Damage",  desc: "2x damage for 8s",    apply: () => { bulletDamage *= 2;  addTempEffect(() => bulletDamage /= 2,   8); } },
+    { name: "Rapid Fire",     desc: "4x fire rate for 8s", apply: () => { shootInterval /= 4; addTempEffect(() => shootInterval *= 4,  8); } },
+    { name: "Double Damage",  desc: "4x damage for 8s",    apply: () => { bulletDamage *= 4;  addTempEffect(() => bulletDamage /= 4,   8); } },
     { name: "Shield",         desc: "Invincible for 5s",   apply: () => { addTempEffect(() => {},  5, true); } },
 ];
 
@@ -172,12 +172,16 @@ function handleCardInput(e) {
         if (e.key === "ArrowRight") draft.activeIndex = (draft.activeIndex + 1) % 3;
         if (e.key === "ArrowLeft")  draft.activeIndex = (draft.activeIndex + 2) % 3;
         if (e.key === "Enter") {
-            const picked = draft.cards[draft.activeIndex];
-            hand.push(picked);
+            let selectedCards = [...selected].map(i => hand[i]);
+            if (selectedCards.length != 5) return;
+            if (remHands == 0) return;
+        
+            selectedCards.sort((a, b) => b.value - a.value);
+        
+            scoreSelectedCards(selectedCards);
+            discardSelected(false);
             sortHand();
-            draft = null;
-            paused = false;
-            addNotification("Card Drafted!", `${picked.rank}${picked.suit} added to hand`);
+            remHands -= 1;
         }
         return;
     }
@@ -363,13 +367,13 @@ function scoreSelectedCards(cards) {
             break;
 
         case "Straight":
-            bulletCountModifier += Math.ceil(cards[4].value / 2);
-            addNotification("Straight", `+${Math.ceil(cards[4].value / 2)} bullet count`);
+            bulletCountModifier += cards[4].value;
+            addNotification("Straight", `+${cards[4].value} bullet count`);
             break;
 
         case "Three of a Kind":
-            bulletDamage += Math.ceil(cards[0].value / 2);
-            addNotification("Three of a Kind", `+${Math.ceil(cards[0].value / 2)} bullet damage`);
+            bulletDamage *= 1 + (Math.ceil(cards[0].value / 2) / 10);
+            addNotification("Three of a Kind", `x${1 + (Math.ceil(cards[0].value / 2) / 10)} bullet damage`);
             break;
 
         case "Two Pair": {
@@ -382,7 +386,7 @@ function scoreSelectedCards(cards) {
 
         case "Pair": {
             const pairCard = cards.find(c => freq[c.value] === 2);
-            shootInterval = Math.max(0.1, shootInterval - 0.01 * pairCard.value);
+            shootInterval = Math.max(0.1, shootInterval - 0.02 * pairCard.value);
             addNotification("Pair", `-${(0.01 * pairCard.value).toFixed(2)}s fire rate`);
             break;
         }
