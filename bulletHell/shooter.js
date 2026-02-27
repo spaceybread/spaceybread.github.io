@@ -196,16 +196,11 @@ function handleCardInput(e) {
         if (e.key === "ArrowRight") draft.activeIndex = (draft.activeIndex + 1) % 3;
         if (e.key === "ArrowLeft")  draft.activeIndex = (draft.activeIndex + 2) % 3;
         if (e.key === "Enter") {
-            let selectedCards = [...selected].map(i => hand[i]);
-            if (selectedCards.length != 5) return;
-            if (remHands == 0) return;
-        
-            selectedCards.sort((a, b) => b.value - a.value);
-        
-            scoreSelectedCards(selectedCards);
-            discardSelected(false);
+            const chosen = draft.cards[draft.activeIndex];
+            hand.push(chosen);
             sortHand();
-            remHands -= 1;
+            draft = null;
+            paused = false;
         }
         return;
     }
@@ -543,10 +538,10 @@ function updateBullets(delta) {
             if (currentStreak % 10 === 0) {
                 addNotification(`${currentStreak} Kill Streak!`, "You're on fire!");
             }
-            if (Math.random() < 0.20) {
+            if (Math.random() < 0.30) {
                 const type = Math.random() < 0.5 ? "powerup" : "apple";
                 items.push({ x: e.x, y: e.y, type });
-            } else if (Math.random() < 0.05) {
+            } else if (Math.random() < 0.10) {
                 items.push({ x: e.x, y: e.y, type: "draft" });
             }
             return false;
