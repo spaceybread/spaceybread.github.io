@@ -1,3 +1,6 @@
+import { evaluateHand } from "./logic.js";
+
+
 let canvas, ctx;
 
 const TILE_SIZE = 48;
@@ -117,9 +120,9 @@ export function drawPlayer(player, camera, state) {
     }
 
     if (state.nearestDir) {
-        const tipDist = s / 2 + 10;
+        const tipDist = s / 2 + 3;
         ctx.strokeStyle = state.playerHitTimer > 0 ? "white" : "rgba(255,255,255,0.8)";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 0.1;
         ctx.beginPath();
         ctx.moveTo(sx + state.nearestDir.x * (s / 2 + 2),
                    sy + state.nearestDir.y * (s / 2 + 2));
@@ -602,4 +605,20 @@ function drawDraftCard(x, y, w, h, card, isActive) {
     ctx.font = "16px monospace";
     ctx.fillText(card.suit, -8, 18);
     ctx.restore();
+}
+
+export function drawHandPreview(hand, selected) {
+    if (selected.size !== 5) return;
+
+    const selectedCards = [...selected].map(i => hand[i]).sort((a, b) => b.value - a.value);
+
+    const handName = evaluateHand(selectedCards);
+
+    ctx.font = "bold 20px monospace";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(`▶ ${handName}`, canvas.width / 2, canvas.height - 150);
+    ctx.shadowBlur = 0;
 }

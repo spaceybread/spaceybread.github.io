@@ -288,159 +288,110 @@ function discardSelected(isCounted) {
     activeIndex = 0;
 }
 
-function scoreSelectedCards(cards) {
-    let isFlush = true; 
-    for (let i = 1; i < cards.length; i++) isFlush = isFlush && (cards[0].suit == cards[i].suit); 
+export function evaluateHand(cards) {
+    const isFlush = cards.every(c => c.suit === cards[0].suit);
 
-    let isStraight = true; 
-    
-    if (cards[0].value == 14 && cards[1].value == 5) {
-        isStraight = cards[2].value == 4 && cards[3].value == 3 && cards[4].value == 2; 
+    let isStraight = true;
+    if (cards[0].value === 14 && cards[1].value === 5) {
+        isStraight = cards[2].value === 4 && cards[3].value === 3 && cards[4].value === 2;
     } else {
         for (let i = 1; i < cards.length; i++) {
-            isStraight = isStraight && (cards[0].value - cards[i].value == i); 
+            if (cards[0].value - cards[i].value !== i) { isStraight = false; break; }
         }
     }
 
     if (isStraight && isFlush) {
-        if (cards[4].value == 10) {
-            // royal flush
-            playedHand = "Royal Flush"; 
-            // better weapons? future work
-            // for now it's just a massive score boost
-            // with a hand upgrade and bullet count boost
-            
-            let ect = enemies.length; 
-            score += ect * 256; 
-            maxHandSize += 2; 
-            bulletCountModifier += cards[4].value;
-            shootInterval = Math.max(0.1, shootInterval - 0.4); 
-            enemies = []; 
-            addNotification("Royal Flush", "Screen cleared · +2 hand size · +bullets · +fire rate");
-
-            return; 
-        } else {
-            // straight flush
-            playedHand = "Straight Flush"; 
-            let ect = enemies.length; 
-            score += ect * 16; 
-
-            enemies = []; 
-            addNotification("Straight Flush", "Screen cleared · score bonus");
-
-            return; 
-        }
+        return cards[0].value === 14 && cards[4].value === 10 ? "Royal Flush" : "Straight Flush";
     }
 
-    const frequency = {};
+    const freq = {};
+    cards.forEach(c => freq[c.value] = (freq[c.value] || 0) + 1);
+    const counts = Object.values(freq);
+    const unique = counts.length;
 
-    cards.forEach(element => {
-        if (frequency[element.value]) {
-            frequency[element.value]++;
-        } else {
-            frequency[element.value] = 1;
-        }
-    });
+    if (unique === 2) return counts.includes(4) ? "Four of a Kind" : "Full House";
+    if (isFlush) return "Flush";
+    if (isStraight) return "Straight";
+    if (unique === 3) return counts.includes(3) ? "Three of a Kind" : "Two Pair";
+    if (unique === 4) return "Pair";
+    return "High Card";
+}
 
-    let uniqueCards = Object.keys(frequency).length;
-    if (uniqueCards == 2) {
-        // either four of kind or full house
+function scoreSelectedCards(cards) {
+    const result = evaluateHand(cards);
+    playedHand = result;
 
-        if (frequency[cards[0].value] == 1 || frequency[cards[0].value] == 4) {
-            // four of a kind
-            playedHand = "Four of a Kind";
-            // get a larger hand
-            maxHandSize += 1; 
+    const freq = {};
+    cards.forEach(c => freq[c.value] = (freq[c.value] || 0) + 1);
+
+    switch (result) {
+        case "Royal Flush":
+            score += enemies.length * 256;
+            maxHandSize += 2;
+            bulletCountModifier += cards[4].value;
+            shootInterval = Math.max(0.1, shootInterval - 0.4);
+            enemies = [];
+            addNotification("Royal Flush", "Screen cleared · +2 hand size · +bullets · +fire rate");
+            break;
+
+        case "Straight Flush":
+            score += enemies.length * 16;
+            enemies = [];
+            addNotification("Straight Flush", "Screen cleared · score bonus");
+            break;
+
+        case "Four of a Kind":
+            maxHandSize += 1;
             addNotification("Four of a Kind", "+1 hand size");
-            return; 
-        } else {
-            // full house
-            playedHand = "Full House";
-            // if smaller number appears three times, 
-            // increase number of max hands and max discards
-            // otherwise, 
-            // increase the rate at which you replenish them 
-            
-            if (cards[0].value == cards[2].value) {
-                discardRefresh = Math.max(1, discardRefresh - Math.ceil(cards[4].value / 5))
-                handRefresh = Math.max(2, handRefresh - Math.ceil(cards[4].value / 5))
+            break;
+
+        case "Full House":
+            if (cards[0].value === cards[2].value) {
+                discardRefresh = Math.max(1, discardRefresh - Math.ceil(cards[4].value / 5));
+                handRefresh = Math.max(2, handRefresh - Math.ceil(cards[4].value / 5));
                 addNotification("Full House", "Faster hand & discard refresh");
             } else {
-                maxDiscards += 1; 
-                maxHands += 1; 
+                maxDiscards += 1;
+                maxHands += 1;
                 addNotification("Full House", "+1 max hands · +1 max discards");
             }
-            
+            break;
 
-            return; 
-        }
-    }
+        case "Flush":
+            maxPlayerHealth += cards[0].value;
+            addNotification("Flush", `+${cards[0].value} max health`);
+            break;
 
-    if (isFlush) {
-        // flush
-        playedHand = "Flush";
-        // increase max health
-        maxPlayerHealth += cards[0].value;
-        addNotification("Flush", `+${cards[0].value} max health`);
+        case "Straight":
+            bulletCountModifier += Math.ceil(cards[4].value / 2);
+            addNotification("Straight", `+${Math.ceil(cards[4].value / 2)} bullet count`);
+            break;
 
-        return; 
-    }
-
-    if (isStraight) {
-        // straight 
-        playedHand = "Straight";
-        // increase number of bullets
-        bulletCountModifier += Math.ceil(cards[4].value / 2); 
-        addNotification("Straight", `+${Math.ceil(cards[4].value / 2)} bullet count`);
-
-        return;     
-    }
-
-    if (uniqueCards == 3) {
-        // either three of a kind of two pair
-        let hasSingle = false; 
-        for (let i = 0; i < cards.length; i++) hasSingle = hasSingle || (frequency[cards[i].value] == 1); 
-        
-        if (!hasSingle) {
-            playedHand = "Three of a Kind"; 
-            // buff damage
+        case "Three of a Kind":
             bulletDamage += Math.ceil(cards[0].value / 2);
             addNotification("Three of a Kind", `+${Math.ceil(cards[0].value / 2)} bullet damage`);
-            return; 
-        } else {
-            playedHand = "Two Pair";
-            // speed up the player 
+            break;
+
+        case "Two Pair": {
             let ct = cards[0].value;
-            if (frequency[ct] == 1) ct = cards[1].value;  
+            if (freq[ct] === 1) ct = cards[1].value;
+            playerSpeed += ct;
             addNotification("Two Pair", `+${ct} player speed`);
-            playerSpeed += ct; 
-
-            return; 
-        }
-    }
-
-    if (uniqueCards == 4) {
-        playedHand = "Pair"; 
-
-        for (let i = 0; i < cards.length; i++) {
-            if (frequency[cards[i].value] == 2) {
-                // heal the player
-                    shootInterval = Math.max(0.1, shootInterval - 0.01 * cards[i].value); 
-                    addNotification("Pair", `-${(0.01 * cards[i].value).toFixed(2)}s fire rate`);
-
-                return; 
-            }
+            break;
         }
 
+        case "Pair": {
+            const pairCard = cards.find(c => freq[c.value] === 2);
+            shootInterval = Math.max(0.1, shootInterval - 0.01 * pairCard.value);
+            addNotification("Pair", `-${(0.01 * pairCard.value).toFixed(2)}s fire rate`);
+            break;
+        }
+
+        case "High Card":
+            playerHealth = Math.min(maxPlayerHealth, playerHealth + cards[0].value);
+            addNotification("High Card", `+${cards[0].value} health`);
+            break;
     }
-
-    // high card lmao
-    playedHand = "High Card"; 
-    // heal the player
-    playerHealth = Math.min(maxPlayerHealth, playerHealth + cards[0].value); 
-    addNotification("High Card", `+${cards[0].value} health`);
-
-    return; 
 }
 
 export function updateLogic(delta) {
@@ -659,7 +610,7 @@ export function getState() {
     let nearestDir = null;
     if (enemies.length > 0) {
         let nearest = enemies.reduce((best, e) => {
-            return Math.hypot(e.x - player.x, e.y - player.y) 
+            return Math.hypot(e.x - player.x, e.y - player.y) < 
                 Math.hypot(best.x - player.x, best.y - player.y) ? e : best;
         }, enemies[0]);
         const ddx = nearest.x - player.x;

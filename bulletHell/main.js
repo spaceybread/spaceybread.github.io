@@ -11,8 +11,10 @@ import {
     drawPauseScreen,
     drawGameOverScreen,
     drawNotifications,
-    drawDraftScreen
+    drawDraftScreen,
+    drawHandPreview
 } from "./graphics.js";
+
 import {
     initLogic,
     updateLogic,
@@ -64,6 +66,7 @@ function gameLoop(now) {
     drawHand(state.hand, state.selected, state.activeIndex);
     drawItems(state.items, state.camera);
     drawNotifications(state.notifications);
+    drawHandPreview(state.hand, state.selected);
     
     if (state.draft) {
         drawDraftScreen(state);
