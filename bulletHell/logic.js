@@ -25,7 +25,7 @@ let maxHandSize = 7;
 let playerHealth = 100;
 let bullets = [];
 let mouseWorld = { x: 0, y: 0 };
-const BULLET_SPEED = 500;
+const BULLET_SPEED = 750;
 let bulletDamage = 40;
 let enemyMaxHealth = 100;
 let maxPlayerHealth = 100;
@@ -54,6 +54,18 @@ let playerHitTimer = 0;
 const HIT_FLASH_DURATION = 0.15;
 let enemiesKilled = 0;
 let currentStreak = 0;
+
+let draft = null;
+
+const POWERUPS = [
+    { name: "Speed Boost",    desc: "+50 speed for 10s",   apply: () => { playerSpeed += 50;  addTempEffect(() => playerSpeed -= 50,  10); } },
+    { name: "Rapid Fire",     desc: "2x fire rate for 8s", apply: () => { shootInterval /= 2; addTempEffect(() => shootInterval *= 2,  8); } },
+    { name: "Double Damage",  desc: "2x damage for 8s",    apply: () => { bulletDamage *= 2;  addTempEffect(() => bulletDamage /= 2,   8); } },
+    { name: "Shield",         desc: "Invincible for 5s",   apply: () => { addTempEffect(() => {},  5, true); } },
+];
+
+let tempEffects = [];
+let invincible = false;
 
 function sortHand() {
     hand.sort((b, a) => a.value - b.value);
@@ -154,7 +166,23 @@ export function initLogic(c) {
 }
 
 function handleCardInput(e) {
-    if (paused || gameOver) return;
+    if (gameOver) return;
+
+    if (draft) {
+        if (e.key === "ArrowRight") draft.activeIndex = (draft.activeIndex + 1) % 3;
+        if (e.key === "ArrowLeft")  draft.activeIndex = (draft.activeIndex + 2) % 3;
+        if (e.key === "Enter") {
+            const picked = draft.cards[draft.activeIndex];
+            hand.push(picked);
+            sortHand();
+            draft = null;
+            paused = false;
+            addNotification("Card Drafted!", `${picked.rank}${picked.suit} added to hand`);
+        }
+        return;
+    }
+
+    if (paused) return;
 
     if (hand.length === 0) return;
 
@@ -456,6 +484,16 @@ export function updateLogic(delta) {
         return n.timer > 0;
     });
 
+    tempEffects = tempEffects.filter(e => {
+        e.timer -= delta;
+        if (e.timer <= 0) {
+            e.revert();
+            if (e.isShield) invincible = false;
+            return false;
+        }
+        return true;
+    });
+
     spawnEnemies(delta);
     updateEnemies(delta);
     updateBullets(delta);
@@ -473,7 +511,8 @@ function spawnEnemies(delta) {
             x: player.x + Math.cos(angle) * dist,
             y: player.y + Math.sin(angle) * dist,
             size: 14,
-            health: enemyMaxHealth * gameStageModifier
+            health: enemyMaxHealth * gameStageModifier,
+            maxHealth: enemyMaxHealth * gameStageModifier
         });
     }
 }
@@ -516,9 +555,11 @@ function updateBullets(delta) {
             if (currentStreak % 10 === 0) {
                 addNotification(`${currentStreak} Kill Streak!`, "You're on fire!");
             }
-            if (Math.random() < 0.25) {
-                const type = Math.random() < 0.5 ? "card" : "apple";
+            if (Math.random() < 0.20) {
+                const type = Math.random() < 0.5 ? "powerup" : "apple";
                 items.push({ x: e.x, y: e.y, type });
+            } else if (Math.random() < 0.05) {
+                items.push({ x: e.x, y: e.y, type: "draft" });
             }
             return false;
         }
@@ -526,15 +567,39 @@ function updateBullets(delta) {
     });
 }
 
+function openDraft() {
+    const cards = [];
+    const tempDeck = shuffle(createDeck());
+    for (let i = 0; i < 3; i++) {
+        cards.push(tempDeck[i]);
+    }
+    draft = { cards, activeIndex: 0 };
+    paused = true;
+}
+
+function addTempEffect(revert, duration, isShield = false) {
+    if (isShield) invincible = true;
+    tempEffects.push({ revert, timer: duration, isShield });
+}
+
+function applyPowerup() {
+    const p = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+    p.apply();
+    addNotification(p.name, p.desc);
+}
+
+
 function checkPlayerEnemyCollision() {
     for (const e of enemies) {
         const dx = player.x - e.x;
         const dy = player.y - e.y;
         if (Math.hypot(dx, dy) < player.size / 2 + e.size) {
-            playerHealth -= 20; 
+            if (!invincible) {
+                playerHealth -= 20;
+                playerHitTimer = HIT_FLASH_DURATION;
+                currentStreak = 0;
+            }
             const len = Math.hypot(dx, dy);
-            playerHitTimer = HIT_FLASH_DURATION;
-            currentStreak = 0;
             e.x -= (dx / len) * 30;
             e.y -= (dy / len) * 30;
         }
@@ -557,10 +622,11 @@ function checkItemPickup() {
         if (dist < player.size + 10) {
             if (item.type === "apple") {
                 playerHealth = Math.min(maxPlayerHealth, playerHealth + 20);
-            } else if (item.type === "card") {
-                if (deck.length === 0) deck = shuffle(createDeck());
-                hand.push(deck.pop());
-                sortHand();
+                addNotification("Apple!", "+20 health");
+            } else if (item.type === "draft") {
+                openDraft();
+            } else if (item.type === "powerup") {
+                applyPowerup();
             }
             return false;
         }
@@ -635,7 +701,10 @@ export function getState() {
         nearestDir,
         enemiesKilled,
         currentStreak,
-        notifications
+        notifications,
+        draft,
+        invincible,
+        tempEffects: tempEffects.map(e => ({ timer: e.timer, isShield: e.isShield })),
     };
 }
 
@@ -678,4 +747,7 @@ export function restartGame() {
     enemiesKilled = 0;
     currentStreak = 0;
     notifications = [];
+    draft = null;
+    tempEffects = [];
+    invincible = false;
 }

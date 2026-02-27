@@ -165,7 +165,7 @@ export function drawEnemies(enemies, camera) {
         ctx.fillStyle = "#333";
         ctx.fillRect(bx, by, barW, barH);
         ctx.fillStyle = "#e53935";
-        ctx.fillRect(bx, by, barW * (e.health / 100), barH);
+        ctx.fillRect(bx, by, barW * (e.health / e.maxHealth), barH);
     }
 }
 
@@ -208,8 +208,13 @@ function drawCard(x, y, w, h, card, isSelected) {
         "♣": "blue" 
     }
 
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(x + 4, y + 4, w, h);   
+    
     ctx.fillStyle = isSelected ? "#FFD700" : "white";
     ctx.fillRect(x, y, w, h);
+
+    
 
     ctx.strokeStyle = "black";
     ctx.lineWidth = 3;
@@ -255,14 +260,7 @@ export function drawItems(items, camera) {
         const sx = item.x - camera.x;
         const sy = item.y - camera.y;
 
-        if (item.type === "card") {
-            ctx.fillStyle = "white";
-            ctx.fillRect(sx - 8, sy - 12, 16, 22);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(sx - 8, sy - 12, 16, 22);
-
-        } else if (item.type === "apple") {
+        if (item.type === "apple") {
             ctx.fillStyle = "#e53935";
             ctx.fillRect(sx - 7, sy - 7, 14, 14);
             ctx.strokeStyle = "black";
@@ -270,6 +268,28 @@ export function drawItems(items, camera) {
             ctx.strokeRect(sx - 7, sy - 7, 14, 14);
             ctx.fillStyle = "#43a047";
             ctx.fillRect(sx, sy - 10, 2, 4);
+
+        } else if (item.type === "draft") {
+            ctx.fillStyle = "white";
+            ctx.fillRect(sx - 8, sy - 12, 16, 22);
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sx - 8, sy - 12, 16, 22);
+            ctx.fillStyle = "black";
+            ctx.font = "8px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("?", sx, sy + 2);
+
+        } else if (item.type === "powerup") {
+            ctx.fillStyle = "#1565c0";
+            ctx.fillRect(sx - 9, sy - 9, 18, 18);
+            ctx.strokeStyle = "#FFD700";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(sx - 9, sy - 9, 18, 18);
+            ctx.fillStyle = "#FFD700";
+            ctx.font = "bold 12px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("★", sx, sy + 5);
         }
     }
 }
@@ -299,6 +319,19 @@ export function drawUI(state) {
     ctx.fillStyle = "white";
     ctx.font = "12px monospace";
     ctx.fillText(`HP: ${state.playerHealth} / ${state.playerMaxHealth}`, bx + 4, by + 15);
+
+    if (state.tempEffects && state.tempEffects.length > 0) {
+        ctx.font = "13px monospace";
+        ctx.textAlign = "right";
+        state.tempEffects.forEach((e, i) => {
+            ctx.fillStyle = e.isShield ? "#64b5f6" : "#FFD700";
+            ctx.fillText(
+                e.isShield ? `Shield: ${e.timer.toFixed(1)}s` : `Boost: ${e.timer.toFixed(1)}s`,
+                canvas.width - 20,
+                70 + i * 20
+            );
+        });
+    }
 }
 
 export function drawStatsPanel(state) {
@@ -490,4 +523,83 @@ export function drawNotifications(notifications) {
 
         ctx.shadowBlur = 0;
     });
+}
+
+export function drawDraftScreen(state) {
+    ctx.fillStyle = "rgba(0,0,0,0.75)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.textAlign = "center";
+    ctx.font = "bold 36px monospace";
+    ctx.fillStyle = "#FFD700";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 8;
+    ctx.fillText("CARD DRAFT", canvas.width / 2, canvas.height / 2 - 140);
+    ctx.shadowBlur = 0;
+
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#aaa";
+    ctx.fillText("← → to choose · Enter to pick", canvas.width / 2, canvas.height / 2 - 100);
+
+    const cardW = 100;
+    const cardH = 150;
+    const spacing = 40;
+    const totalW = 3 * cardW + 2 * spacing;
+    const startX = canvas.width / 2 - totalW / 2;
+    const cardY = canvas.height / 2 - cardH / 2;
+
+    state.draft.cards.forEach((card, i) => {
+        const x = startX + i * (cardW + spacing);
+        const isActive = i === state.draft.activeIndex;
+
+        const lift = isActive ? -20 : 0;
+
+        if (isActive) {
+            ctx.shadowColor = "#FFD700";
+            ctx.shadowBlur = 20;
+        }
+
+        drawDraftCard(x, cardY + lift + 20, cardW, cardH, card, isActive);
+        ctx.shadowBlur = 0;
+    });
+}
+
+function drawDraftCard(x, y, w, h, card, isActive) {
+    const isRed = card.suit === "♥" || card.suit === "♦";
+    const colorMap = { "♥": "red", "♦": "orange", "♠": "black", "♣": "blue" };
+
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(x + 4, y + 4, w, h);
+
+    ctx.fillStyle = isActive ? "#fffde7" : "white";
+    ctx.fillRect(x, y, w, h);
+
+    ctx.strokeStyle = isActive ? "#FFD700" : "#333";
+    ctx.lineWidth = isActive ? 3 : 2;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.fillStyle = colorMap[card.suit];
+    ctx.font = "bold 18px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText(card.rank, x + 8, y + 22);
+
+    ctx.font = "16px monospace";
+    ctx.fillText(card.suit, x + 8, y + 40);
+
+    ctx.font = "48px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(card.suit, x + w / 2, y + h / 2 + 15);
+
+    ctx.save();
+    ctx.translate(x + w - 16, y + h - 20);
+    ctx.rotate(Math.PI);
+    ctx.textAlign = "left";
+    
+    ctx.font = "bold 18px monospace";
+    ctx.fillStyle = colorMap[card.suit];
+    ctx.fillText(card.rank, -8, 0);
+    
+    ctx.font = "16px monospace";
+    ctx.fillText(card.suit, -8, 18);
+    ctx.restore();
 }

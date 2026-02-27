@@ -10,7 +10,8 @@ import {
     drawItems,
     drawPauseScreen,
     drawGameOverScreen,
-    drawNotifications
+    drawNotifications,
+    drawDraftScreen
 } from "./graphics.js";
 import {
     initLogic,
@@ -63,8 +64,14 @@ function gameLoop(now) {
     drawHand(state.hand, state.selected, state.activeIndex);
     drawItems(state.items, state.camera);
     drawNotifications(state.notifications);
-    if (state.paused) drawPauseScreen(state);
-    if (state.gameOver) drawGameOverScreen(state);
+    
+    if (state.draft) {
+        drawDraftScreen(state);
+    } else if (state.paused) {
+        drawPauseScreen(state);
+    } else if (state.gameOver) {
+        drawGameOverScreen(state);
+    }
     
     requestAnimationFrame(gameLoop);
 }
