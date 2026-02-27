@@ -541,8 +541,8 @@ function updateBullets(delta) {
             if (Math.random() < 0.30) {
                 const type = Math.random() < 0.5 ? "powerup" : "apple";
                 items.push({ x: e.x, y: e.y, type });
-            } else if (Math.random() < 0.10) {
-                items.push({ x: e.x, y: e.y, type: "draft" });
+            // } else if (Math.random() < 0.10) {
+            //     items.push({ x: e.x, y: e.y, type: "draft" });
             }
             for (let i = 0; i < 12; i++) {
                 const angle = Math.random() * Math.PI * 2;
