@@ -26,7 +26,7 @@ export class BasePlayerLogic {
         this.bullets = [];
         this.mouseWorld = { x: 0, y: 0 };
         this.BULLET_SPEED = 750;
-        this.bulletDamage = 40;
+        this.bulletDamage = 10;
         this.enemyMaxHealth = 100;
         this.maxPlayerHealth = 100;
         this.bulletCountModifier = 1;
@@ -61,9 +61,9 @@ export class BasePlayerLogic {
         this.coins = 0;
 
         this.POWERUPS = [
-            { name: "Speed Boost",   desc: "+50 speed for 10s",   apply: () => { this.playerSpeed += 50;      this._addTempEffect(() => this.playerSpeed -= 50, 10); } },
-            { name: "Rapid Fire",    desc: "4x fire rate for 8s", apply: () => { this.shootInterval /= 4;     this._addTempEffect(() => this.shootInterval *= 4, 8); } },
-            { name: "Double Damage", desc: "4x damage for 8s",    apply: () => { this.bulletDamage *= 4;      this._addTempEffect(() => this.bulletDamage /= 4, 8); } },
+            { name: "Speed Boost",   desc: "+25 speed for 10s",   apply: () => { this.playerSpeed += 25;      this._addTempEffect(() => this.playerSpeed -= 25, 10); } },
+            { name: "Rapid Fire",    desc: "2x fire rate for 4s", apply: () => { this.shootInterval /= 2;     this._addTempEffect(() => this.shootInterval *= 2, 4); } },
+            { name: "Double Damage", desc: "2x damage for 4s",    apply: () => { this.bulletDamage *= 2;      this._addTempEffect(() => this.bulletDamage /= 2, 4); } },
             { name: "Shield",        desc: "Invincible for 5s",   apply: () => {                              this._addTempEffect(() => {}, 5, true); } },
         ];
     }
@@ -573,7 +573,7 @@ export class BasePlayerLogic {
         const spawnY = this.player.y + Math.sin(angle) * 900;
     
         if (roll < 0.33) {
-            const hp = 800 * this.gameStageModifier;
+            const hp = 800 * this.gameStageModifier * this.gameStageModifier * this.gameStageModifier;
             this.enemies.push({
                 type: "boss", bossType: "ringer",
                 x: spawnX, y: spawnY,
@@ -583,7 +583,7 @@ export class BasePlayerLogic {
             });
             this._addNotification("⚠ BOSS INCOMING", "Triangular terror approaches!");
         } else if (roll < 0.67) {
-            const hp = 600 * this.gameStageModifier;
+            const hp = 600 * this.gameStageModifier * this.gameStageModifier * this.gameStageModifier;
             this.enemies.push({
                 type: "boss", bossType: "splitter",
                 x: spawnX, y: spawnY,
@@ -594,7 +594,7 @@ export class BasePlayerLogic {
             });
             this._addNotification("⚠ BOSS INCOMING", "It... divides?");
         } else {
-            const hp = 1200 * this.gameStageModifier;
+            const hp = 1200 * this.gameStageModifier * this.gameStageModifier * this.gameStageModifier;
             this.enemies.push({
                 type: "boss", bossType: "mosspit",
                 x: spawnX, y: spawnY,
@@ -814,7 +814,7 @@ export class BasePlayerLogic {
         
                 if (this.currentStreak % 10 === 0)
                     this._addNotification(`${this.currentStreak} Kill Streak!`, "You're on fire!");
-                if (Math.random() < 0.30)
+                if (Math.random() < 0.05)
                     this.items.push({ x: e.x, y: e.y, type: Math.random() < 0.5 ? "powerup" : "apple" });
                 this._onEnemyDeath(e);
                 
