@@ -848,7 +848,7 @@ export function drawPauseScreen(state) {
 
     const handInfo = [
         ["Royal Flush",     "Clear screen, massive score bonus,"],
-        ["",                "+2 hand size, +bullets, +fire rate"],
+        ["",                "+2 hand size"],
         ["Straight Flush",  "Clear screen + score bonus"],
         ["Four of a Kind",  "+1 hand size"],
         ["Full House",      "High card x3: faster refresh"],

@@ -426,8 +426,6 @@ export class BasePlayerLogic {
                 this.score += this.enemies.length * 256;
                 this.maxHandSize += 2;
                 this._refillHand();
-                this.bulletCountModifier += cards[4].value;
-                this.shootInterval = Math.max(0.1, this.shootInterval - 0.4);
                 this.enemies = [];
                 this._addNotification("Royal Flush", "Screen cleared · +2 hand size · +bullets · +fire rate");
                 break;
