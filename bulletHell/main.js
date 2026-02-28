@@ -23,8 +23,16 @@ import {
     drawPlayerSelectScreen,
     drawEnemyBullets,
     drawLasers,
-    drawMines
+    drawMines,
+    drawShopScreen
 } from "./graphics.js";
+
+import { 
+    SHOP_ITEMS, 
+    getOwnedLevels, 
+    buyItem, 
+    resetShop 
+} from "./shop.js";
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -38,7 +46,23 @@ window.addEventListener("resize", () => {
     canvas.height = window.innerHeight;
 });
 
+
+let shopActive = false;
+let shopSelectedIndex = 0;
+let _shopResetConfirm = false;
+
+
 initGraphics(canvas, ctx);
+
+function getShopState() {
+    return {
+        items: SHOP_ITEMS,
+        owned: getOwnedLevels(),
+        coins: parseInt(localStorage.getItem("coins") || "0"),
+        selectedIndex: shopSelectedIndex,
+        resetConfirm: _shopResetConfirm,
+    };
+}
 
 function getBestTimes() {
     return {
@@ -59,8 +83,28 @@ let gameKeyUpHandler = null;
 let gameMouseHandler = null;
 
 document.addEventListener("keydown", async e => {
+
+    if (shopActive) {
+        if (e.key === "ArrowUp")   shopSelectedIndex = Math.max(0, shopSelectedIndex - 1);
+        if (e.key === "ArrowDown") shopSelectedIndex = Math.min(SHOP_ITEMS.length - 1, shopSelectedIndex + 1);
+        if (e.key === "Enter")     buyItem(SHOP_ITEMS[shopSelectedIndex].id);
+        if (e.key.toLowerCase() === "x") {
+            if (_shopResetConfirm) {
+                resetShop();
+                _shopResetConfirm = false;
+            } else {
+                _shopResetConfirm = true;
+                setTimeout(() => _shopResetConfirm = false, 3000);
+            }
+        }
+        if (e.key === "Escape" || e.key.toLowerCase() === "p") shopActive = false;
+        return;
+    }
+
     if (menuActive) {
+        if (e.key.toLowerCase() === "s") { shopActive = true; return; }
         const idx = menuOptions.indexOf(menuChoice);
+        
         if (e.key === "ArrowLeft")  menuChoice = menuOptions[(idx - 1 + menuOptions.length) % menuOptions.length];
         if (e.key === "ArrowRight") menuChoice = menuOptions[(idx + 1) % menuOptions.length];
         if (e.key === "Enter") {
@@ -72,6 +116,10 @@ document.addEventListener("keydown", async e => {
                 if (e.key.toLowerCase() === "r") {
                     const state = logic.getState();
                     if (state.gameOver) logic.restartGame();
+                }
+                if (e.key === "Escape") {
+                    const state = logic.getState();
+                    if (state.gameOver) window.location.reload();
                 }
                 logic.handleKeyDown(e);
             };
@@ -85,6 +133,7 @@ document.addEventListener("keydown", async e => {
         return;
     }
 });
+
 let lastTime = performance.now();
 
 function gameLoop(now) {
@@ -93,6 +142,12 @@ function gameLoop(now) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (shopActive) {
+        drawShopScreen(getShopState());
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+
     if (menuActive || !logic) {
         ctx.fillStyle = "#0a0a0f";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -100,6 +155,8 @@ function gameLoop(now) {
         requestAnimationFrame(gameLoop);
         return;
     }
+
+
 
     logic.updateLogic(delta);
 

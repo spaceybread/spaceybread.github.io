@@ -1,3 +1,6 @@
+import { getStartingBonuses } from "./shop.js";
+
+
 export class BasePlayerLogic {
     constructor() {
         this.canvas = null;
@@ -53,6 +56,9 @@ export class BasePlayerLogic {
         this.lasers = [];
         this._laserSpawnTimer = 0;
         this._bossTimer = 60;
+        this._truePlayerSpeed = 200;
+        this.sessionCoins = 0;
+        this.coins = 0;
 
         this.POWERUPS = [
             { name: "Speed Boost",   desc: "+50 speed for 10s",   apply: () => { this.playerSpeed += 50;      this._addTempEffect(() => this.playerSpeed -= 50, 10); } },
@@ -68,6 +74,18 @@ export class BasePlayerLogic {
 
     // ── init ────────────────────────────────────────────────────────
     initLogic(canvas) {
+        const bonuses = getStartingBonuses();
+        if (bonuses.startSpeed)    this.playerSpeed    += bonuses.startSpeed;
+        if (bonuses.startHealth)   this.maxPlayerHealth += bonuses.startHealth;
+        if (bonuses.startDamage)   this.bulletDamage   += bonuses.startDamage;
+        if (bonuses.startHandSize) this.maxHandSize     += bonuses.startHandSize;
+        if (bonuses.startDiscards) this.maxDiscards     += bonuses.startDiscards;
+        if (bonuses.startFireRate) this.shootInterval   = Math.max(0.1, this.shootInterval - bonuses.startFireRate);
+        
+        this.playerHealth = this.maxPlayerHealth;
+        this._shopBonuses = bonuses;
+
+        
         this.canvas = canvas;
         this.deck = this._shuffle(this._createDeck());
         this.hand = this.deck.splice(0, this.maxHandSize);
@@ -82,6 +100,9 @@ export class BasePlayerLogic {
         this.playerHealth = 100;
         this.bullets = [];
         this.items = [];
+
+        this.coins = parseInt(localStorage.getItem("coins") || "0");
+        this.sessionCoins = 0;
     }
 
     handleKeyDown(e) {
@@ -212,6 +233,8 @@ export class BasePlayerLogic {
             playerChoice: this.playerChoice,
             enemyBullets: this.enemyBullets,
             lasers: this.lasers,
+            sessionCoins: this.sessionCoins,
+            coins: parseInt(localStorage.getItem("coins") || "0"),
         };
     }
 
@@ -261,6 +284,9 @@ export class BasePlayerLogic {
         this._laserSpawnTimer = 0;
         this.invincible = false;
         this._bossTimer = 60;
+        this._truePlayerSpeed = 200;
+        this.sessionCoins = 0;
+        this.coins = 0;
 
     }
 
@@ -380,6 +406,14 @@ export class BasePlayerLogic {
         return "High Card";
     }
 
+    _refillHand() {
+        while (this.hand.length < this.maxHandSize) {
+            if (this.deck.length === 0) this.deck = this._shuffle(this._createDeck());
+            this.hand.push(this.deck.pop());
+        }
+        this._sortHand();
+    }
+
     _scoreSelectedCards(cards) {
         cards = [...cards].sort((a, b) => b.value - a.value);
         const result = this.evaluateHand(cards);
@@ -391,6 +425,7 @@ export class BasePlayerLogic {
             case "Royal Flush":
                 this.score += this.enemies.length * 256;
                 this.maxHandSize += 2;
+                this._refillHand();
                 this.bulletCountModifier += cards[4].value;
                 this.shootInterval = Math.max(0.1, this.shootInterval - 0.4);
                 this.enemies = [];
@@ -403,6 +438,7 @@ export class BasePlayerLogic {
                 break;
             case "Four of a Kind":
                 this.maxHandSize += 1;
+                this._refillHand();
                 this._addNotification("Four of a Kind", "+1 hand size");
                 break;
             case "Full House":
@@ -477,6 +513,9 @@ export class BasePlayerLogic {
                 y: this.player.y + Math.sin(angle) * 800,
                 hitTimer: 0,
             };
+
+            // debug return lmao
+            // return; 
     
             if (roll < 0.5) {
                 // weak ass
@@ -519,8 +558,7 @@ export class BasePlayerLogic {
 
     _updateBossSpawning(delta) {
         this._bossTimer -= delta;
-        let c = 1; 
-        if ((performance.now() - this.startTime) / 1000 > 300) c = 2; 
+        let c = Math.ceil((performance.now() - this.startTime) / (1000 * 200)); 
         
         if (this._bossTimer <= 0) {
             for (; c > 0; c--) {
@@ -532,20 +570,44 @@ export class BasePlayerLogic {
     
     _spawnBoss() {
         const angle = Math.random() * Math.PI * 2;
-        const hp = 800 * this.gameStageModifier;
-        this.enemies.push({
-            type: "boss",
-            x: this.player.x + Math.cos(angle) * 900,
-            y: this.player.y + Math.sin(angle) * 900,
-            size: 32,
-            health: hp,
-            maxHealth: hp,
-            hitTimer: 0,
-            shootTimer: 0,
-            shootInterval: 2.2,
-            bulletCount: 16,
-        });
-        this._addNotification("⚠ BOSS INCOMING", "Triangular terror approaches!");
+        const roll = Math.random();
+        const spawnX = this.player.x + Math.cos(angle) * 900;
+        const spawnY = this.player.y + Math.sin(angle) * 900;
+    
+        if (roll < 0.33) {
+            const hp = 800 * this.gameStageModifier;
+            this.enemies.push({
+                type: "boss", bossType: "ringer",
+                x: spawnX, y: spawnY,
+                size: 32, health: hp, maxHealth: hp,
+                hitTimer: 0, shootTimer: 0,
+                shootInterval: 2.2, bulletCount: 32,
+            });
+            this._addNotification("⚠ BOSS INCOMING", "Triangular terror approaches!");
+        } else if (roll < 0.67) {
+            const hp = 600 * this.gameStageModifier;
+            this.enemies.push({
+                type: "boss", bossType: "splitter",
+                x: spawnX, y: spawnY,
+                size: 36, health: hp, maxHealth: hp,
+                hitTimer: 0, shootTimer: 0,
+                shootInterval: 1.8, bulletCount: 8,
+                generation: 0,
+            });
+            this._addNotification("⚠ BOSS INCOMING", "It... divides?");
+        } else {
+            const hp = 1200 * this.gameStageModifier;
+            this.enemies.push({
+                type: "boss", bossType: "mosspit",
+                x: spawnX, y: spawnY,
+                size: 40, health: hp, maxHealth: hp,
+                hitTimer: 0,
+                auraRadius: 320,
+                auraDamageTimer: 0,
+                auraDamageInterval: 0.5, 
+            });
+            this._addNotification("⚠ MOSS PIT RISES", "Stay out of the rot...");
+        }
     }
 
     _updateEnemies(delta) {
@@ -584,7 +646,7 @@ export class BasePlayerLogic {
                 }
             }
 
-            if (e.type === "boss") {
+            if (e.type === "boss" && e.bossType === "ringer") {
                 e.shootTimer += delta;
                 if (e.shootTimer >= e.shootInterval) {
                     e.shootTimer = 0;
@@ -600,6 +662,40 @@ export class BasePlayerLogic {
                             isBoss: true,
                         });
                     }
+                }
+            }
+
+            if (e.type === "boss" && e.bossType === "splitter") {
+                e.shootTimer += delta;
+                if (e.shootTimer >= e.shootInterval) {
+                    e.shootTimer = 0;
+                    const count = e.bulletCount;
+                    const offset = performance.now() * 0.001;
+                    for (let i = 0; i < count; i++) {
+                        const a = (i / count) * Math.PI * 2 + offset;
+                        const SPEED = 140 + e.generation * 30;
+                        this.enemyBullets.push({
+                            x: e.x, y: e.y,
+                            vx: Math.cos(a) * SPEED,
+                            vy: Math.sin(a) * SPEED,
+                            life: 4, isBoss: true,
+                        });
+                    }
+                }
+            }
+
+            if (e.type === "boss" && e.bossType === "mosspit") {
+                e.auraDamageTimer += delta;
+                const distToPlayer = Math.hypot(this.player.x - e.x, this.player.y - e.y);
+                if (distToPlayer < e.auraRadius) {
+                    this._inMossAura = true;
+                    if (e.auraDamageTimer >= e.auraDamageInterval && !this.invincible) {
+                        e.auraDamageTimer = 0;
+                        this.playerHealth = Math.max(0, this.playerHealth - 1);
+                        this.playerHitTimer = this.HIT_FLASH_DURATION;
+                    }
+                } else {
+                    if (e.auraDamageTimer >= e.auraDamageInterval) e.auraDamageTimer = 0;
                 }
             }
         }
@@ -688,24 +784,58 @@ export class BasePlayerLogic {
                 }
             }
         }
+        const newEnemies = [];
         this.bullets = this.bullets.filter(b => b.life > 0);
         this.enemies = this.enemies.filter(e => {
             if (e.health <= 0) {
                 this.enemiesKilled++;
                 this.currentStreak++;
-                if (e.type === "boss") {
+        
+                if (e.type === "boss" && e.bossType === "splitter" && e.generation < 2) {
+                    for (let s = 0; s < 2; s++) {
+                        const splitAngle = Math.random() * Math.PI * 2;
+                        newEnemies.push({
+                            type: "boss", bossType: "splitter",
+                            x: e.x + Math.cos(splitAngle) * 30,
+                            y: e.y + Math.sin(splitAngle) * 30,
+                            size: e.size * 0.62,
+                            health: e.maxHealth * 0.45, maxHealth: e.maxHealth * 0.45,
+                            hitTimer: 0, shootTimer: 0,
+                            shootInterval: e.shootInterval * 0.75,
+                            bulletCount: Math.max(4, e.bulletCount - 2),
+                            generation: e.generation + 1,
+                        });
+                    }
+                    this._addNotification("IT SPLIT!", e.generation === 0 ? "One more split left..." : "Final forms!");
+                } else if (e.type === "boss") {
                     this._addNotification("BOSS DEFEATED!", "★ +1000 score bonus · +1 hand size");
-                    this.maxHandSize += 1; 
+                    this.score += 1000;
+                    this.maxHandSize += 1;
+                    this._refillHand();
                 }
+        
                 if (this.currentStreak % 10 === 0)
                     this._addNotification(`${this.currentStreak} Kill Streak!`, "You're on fire!");
                 if (Math.random() < 0.30)
                     this.items.push({ x: e.x, y: e.y, type: Math.random() < 0.5 ? "powerup" : "apple" });
                 this._onEnemyDeath(e);
+                
+                const coinMap = {
+                    normal: 1,
+                    tank: 4,
+                    shooter: 2,
+                    boss: 25,
+                };
+                const earned = coinMap[e.type] || 1;
+                this.sessionCoins += earned;
+                this.coins += earned;
+
                 return false;
             }
             return true;
         });
+        this.enemies.push(...newEnemies);
+
         // enemy bullets
         for (const b of this.enemyBullets) {
             b.x += b.vx * delta; b.y += b.vy * delta; b.life -= delta;
@@ -740,12 +870,14 @@ export class BasePlayerLogic {
 
     _checkPlayerEnemyCollision() {
         
-        if (!this._basePlayerSpeed) this._basePlayerSpeed = this.playerSpeed;
-        const targetSpeed = this._inTankAura
-            ? this._basePlayerSpeed * 0.9
-            : this._basePlayerSpeed;
+        if (this.playerSpeed > this._truePlayerSpeed) {
+            this._truePlayerSpeed = this.playerSpeed;
+        }
         
-        this.playerSpeed += (targetSpeed - this.playerSpeed) * 0.15;
+        const targetMultiplier = this._inMossAura ? 0.5 : this._inTankAura ? 0.9 : 1;
+        this.playerSpeed = this._truePlayerSpeed * targetMultiplier;
+        this._inMossAura = false;
+        this._inTankAura = false;
     
         for (const e of this.enemies) {
             const dx = this.player.x - e.x;
@@ -763,6 +895,9 @@ export class BasePlayerLogic {
         }
         this.playerHealth = Math.max(0, this.playerHealth);
         if (this.playerHealth === 0) {
+            
+            localStorage.setItem("coins", this.coins);
+            
             this.gameOver = true;
             this.score *= this.gameStageModifier;
             if (this.score > this.highScore) {
