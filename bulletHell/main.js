@@ -105,8 +105,8 @@ document.addEventListener("keydown", async e => {
         if (e.key.toLowerCase() === "s") { shopActive = true; return; }
         const idx = menuOptions.indexOf(menuChoice);
         
-        if (e.key === "ArrowLeft")  menuChoice = menuOptions[(idx - 1 + menuOptions.length) % menuOptions.length];
-        if (e.key === "ArrowRight") menuChoice = menuOptions[(idx + 1) % menuOptions.length];
+        if (e.key === "ArrowRight")  menuChoice = menuOptions[(idx - 1 + menuOptions.length) % menuOptions.length];
+        if (e.key === "ArrowLeft") menuChoice = menuOptions[(idx + 1) % menuOptions.length];
         if (e.key === "Enter") {
             menuActive = false;
             logic = await import(gameModules[menuChoice]);
