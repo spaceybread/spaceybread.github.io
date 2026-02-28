@@ -52,6 +52,7 @@ export class BasePlayerLogic {
         this.enemyBullets = [];
         this.lasers = [];
         this._laserSpawnTimer = 0;
+        this._bossTimer = 60;
 
         this.POWERUPS = [
             { name: "Speed Boost",   desc: "+50 speed for 10s",   apply: () => { this.playerSpeed += 50;      this._addTempEffect(() => this.playerSpeed -= 50, 10); } },
@@ -153,6 +154,7 @@ export class BasePlayerLogic {
         this._checkPlayerEnemyCollision();
         this._updateLaserSpawning(delta);
         this._updateLasers(delta);
+        this._updateBossSpawning(delta);
         this._checkItemPickup();
     }
 
@@ -258,6 +260,8 @@ export class BasePlayerLogic {
         this.lasers = [];
         this._laserSpawnTimer = 0;
         this.invincible = false;
+        this._bossTimer = 60;
+
     }
 
     // ── private helpers ─────────────────────────────────────────────
@@ -442,6 +446,26 @@ export class BasePlayerLogic {
                 this._addNotification("High Card", `+${cards[0].value} health`);
                 break;
         }
+        const suitCounts = { "♥": 0, "♠": 0, "♣": 0, "♦": 0 };
+        for (const card of cards) suitCounts[card.suit]++;
+    
+        const hearts   = suitCounts["♥"];
+        const spades   = suitCounts["♠"];
+        const clubs    = suitCounts["♣"];
+        const diamonds = suitCounts["♦"];
+    
+        if (hearts)   this.playerHealth = Math.min(this.maxPlayerHealth, this.playerHealth + hearts);
+        if (spades)   this.bulletDamage += spades;
+        if (clubs)    this.shootInterval = Math.max(0.1, this.shootInterval - clubs * 0.05);
+        if (diamonds) this.playerSpeed += diamonds;
+    
+        const parts = [];
+        if (hearts)   parts.push(`♥ +${hearts} HP`);
+        if (spades)   parts.push(`♠ +${spades} dmg`);
+        if (clubs)    parts.push(`♣ -${clubs * 0.05}s fire`);
+        if (diamonds) parts.push(`♦ +${diamonds} spd`);
+        if (parts.length > 0)
+            this._addNotification("Suit Bonus", parts.join(" · "));
     }
 
     _spawnEnemies(delta) {
@@ -493,6 +517,37 @@ export class BasePlayerLogic {
         }
     }
 
+    _updateBossSpawning(delta) {
+        this._bossTimer -= delta;
+        let c = 1; 
+        if ((performance.now() - this.startTime) / 1000 > 300) c = 2; 
+        
+        if (this._bossTimer <= 0) {
+            for (; c > 0; c--) {
+                this._bossTimer = 60;
+                this._spawnBoss();
+            }
+        }
+    }
+    
+    _spawnBoss() {
+        const angle = Math.random() * Math.PI * 2;
+        const hp = 800 * this.gameStageModifier;
+        this.enemies.push({
+            type: "boss",
+            x: this.player.x + Math.cos(angle) * 900,
+            y: this.player.y + Math.sin(angle) * 900,
+            size: 32,
+            health: hp,
+            maxHealth: hp,
+            hitTimer: 0,
+            shootTimer: 0,
+            shootInterval: 2.2,
+            bulletCount: 16,
+        });
+        this._addNotification("⚠ BOSS INCOMING", "Triangular terror approaches!");
+    }
+
     _updateEnemies(delta) {
         let inAura = false;
         for (const e of this.enemies) {
@@ -526,6 +581,25 @@ export class BasePlayerLogic {
                         vy: Math.sin(aimAngle) * ENEMY_BULLET_SPEED,
                         life: 4,
                     });
+                }
+            }
+
+            if (e.type === "boss") {
+                e.shootTimer += delta;
+                if (e.shootTimer >= e.shootInterval) {
+                    e.shootTimer = 0;
+                    const count = e.bulletCount;
+                    for (let i = 0; i < count; i++) {
+                        const a = (i / count) * Math.PI * 2;
+                        const SPEED = 180;
+                        this.enemyBullets.push({
+                            x: e.x, y: e.y,
+                            vx: Math.cos(a) * SPEED,
+                            vy: Math.sin(a) * SPEED,
+                            life: 5,
+                            isBoss: true,
+                        });
+                    }
                 }
             }
         }
@@ -619,6 +693,10 @@ export class BasePlayerLogic {
             if (e.health <= 0) {
                 this.enemiesKilled++;
                 this.currentStreak++;
+                if (e.type === "boss") {
+                    this._addNotification("BOSS DEFEATED!", "★ +1000 score bonus · +1 hand size");
+                    this.maxHandSize += 1; 
+                }
                 if (this.currentStreak % 10 === 0)
                     this._addNotification(`${this.currentStreak} Kill Streak!`, "You're on fire!");
                 if (Math.random() < 0.30)
@@ -628,7 +706,6 @@ export class BasePlayerLogic {
             }
             return true;
         });
-    
         // enemy bullets
         for (const b of this.enemyBullets) {
             b.x += b.vx * delta; b.y += b.vy * delta; b.life -= delta;
@@ -691,6 +768,12 @@ export class BasePlayerLogic {
             if (this.score > this.highScore) {
                 this.highScore = Math.floor(this.score);
                 localStorage.setItem("highScore", this.highScore);
+            }
+            const timeKey = `bestTime_${this.playerChoice}`;
+            const prevBest = parseFloat(localStorage.getItem(timeKey) || "0");
+            const currentTime = (this.pausedAt - this.startTime - this.totalPausedTime) / 1000;
+            if (currentTime > prevBest) {
+                localStorage.setItem(timeKey, currentTime.toFixed(1));
             }
         }
     }

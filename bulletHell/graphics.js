@@ -190,8 +190,59 @@ export function drawEnemies(enemies, camera) {
             ctx.restore();
         }
 
+        if (e.type === "boss") {
+            const sx = e.x - camera.x;
+            const sy = e.y - camera.y;
+            const s = e.size;
+            const time = performance.now() * 0.001;
+            const pulse = 0.7 + 0.3 * Math.sin(time * 2);
+        
+            ctx.save();
+            ctx.shadowColor = "#ff2200";
+            ctx.shadowBlur = 30 * pulse;
+        
+            ctx.beginPath();
+            ctx.moveTo(sx,         sy - s);           
+            ctx.lineTo(sx + s * 0.866, sy + s * 0.5); 
+            ctx.lineTo(sx - s * 0.866, sy + s * 0.5); 
+            ctx.closePath();
+            ctx.fillStyle = e.hitTimer > 0 ? "#ff88ff" : "#8b0000";
+            ctx.fill();
+            ctx.strokeStyle = e.hitTimer > 0 ? "white" : "#ff2200";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.restore();
+        
+            ctx.save();
+            ctx.translate(sx, sy);
+            ctx.rotate(time * 1.5);
+            ctx.beginPath();
+            ctx.moveTo(0,              -s * 0.45);
+            ctx.lineTo( s * 0.39,  s * 0.225);
+            ctx.lineTo(-s * 0.39,  s * 0.225);
+            ctx.closePath();
+            ctx.fillStyle = `rgba(255, 60, 0, ${pulse * 0.7})`;
+            ctx.fill();
+            ctx.restore();
+        
+            const barW = 60, barH = 5;
+            const bx = sx - barW / 2;
+            const by = sy - s - 12;
+            ctx.fillStyle = "#333";
+            ctx.fillRect(bx, by, barW, barH);
+            ctx.fillStyle = "#ff2200";
+            ctx.fillRect(bx, by, barW * (e.health / e.maxHealth), barH);
+            ctx.strokeStyle = "rgba(255,255,255,0.4)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx, by, barW, barH);
+        
+            continue; 
+        }
+
         ctx.fillStyle = "rgba(0,0,0,0.4)";
         ctx.fillRect(sx - s / 2 + 3, sy - s / 2 + 3, s, s);
+        
+        
 
         if (e.type === "tank") {
             ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "#6a0dad";
@@ -199,7 +250,7 @@ export function drawEnemies(enemies, camera) {
             ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "#cc3300";
         } else {
             ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "purple";
-        }
+        } 
         ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
 
         if (e.hitTimer > 0) {
@@ -215,6 +266,8 @@ export function drawEnemies(enemies, camera) {
         ctx.fillRect(bx, by, barW, barH);
         ctx.fillStyle = e.type === "tank" ? "#9c27b0" : "#e53935";
         ctx.fillRect(bx, by, barW * (e.health / e.maxHealth), barH);
+
+        
     }
 }
 
@@ -503,6 +556,49 @@ export function drawParticles(particles, camera) {
             ctx.stroke();
             ctx.strokeStyle = `rgba(100, 200, 255, ${alpha * 0.6})`;
             ctx.lineWidth = 10;
+            ctx.stroke();
+            ctx.restore();
+            continue;
+        }
+
+        if (p.type === "shockwave") {
+            const alpha = p.life / p.maxLife;
+            const radius = p.maxRadius * (1 - alpha);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 160, 30, ${alpha * 0.9})`;
+            ctx.lineWidth = 4 + (1 - alpha) * 8;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(sx, sy, radius * 0.55, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 200, ${alpha * 0.5})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+            continue;
+        }
+
+        if (p.type === "explosion") {
+            const hue = 15 + Math.random() * 25;
+            ctx.save();
+            ctx.shadowColor = "#ff6600";
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(sx, sy, p.size * (alpha + 0.3), 0, Math.PI * 2);
+            ctx.fillStyle = `hsla(${hue}, 100%, ${35 + alpha * 35}%, ${alpha})`;
+            ctx.fill();
+            ctx.restore();
+            continue;
+        }
+        
+        if (p.type === "explosion_ring") {
+            const radius = p.size * (1 - alpha); 
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 140, 20, ${alpha * 0.85})`;
+            ctx.lineWidth = 3 + (1 - alpha) * 7;
             ctx.stroke();
             ctx.restore();
             continue;
@@ -876,7 +972,94 @@ export function drawHandPreview(hand, selected) {
     ctx.shadowBlur = 0;
 }
 
-export function drawPlayerSelectScreen(selectedChoice) {
+export function drawMines(mines, camera) {
+    if (!mines || mines.length === 0) return;
+
+    const now = performance.now() * 0.001;
+
+    for (const mine of mines) {
+        const sx = mine.x - camera.x;
+        const sy = mine.y - camera.y;
+
+        if (mine.triggered) {
+            const flash = Math.sin(now * 80) > 0;
+            ctx.save();
+            ctx.shadowColor = "#ff2200";
+            ctx.shadowBlur = 30;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 10, 0, Math.PI * 2);
+            ctx.fillStyle = flash ? "#ff4400" : "#ff0000";
+            ctx.fill();
+            ctx.restore();
+            continue;
+        }
+
+        if (!mine.armed) {
+            const progress = 1 - (mine.armTimer / 0.4);
+            ctx.save();
+            ctx.globalAlpha = progress * 0.85;
+        
+            ctx.beginPath();
+            ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+            ctx.fillStyle = "#1a3d1a";
+            ctx.fill();
+            ctx.strokeStyle = "#2d6b2d";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.shadowColor = "#ffe000";
+            ctx.shadowBlur = 8 * progress;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255, 220, 0, ${progress * 0.9})`;
+            ctx.fill();
+        
+            ctx.restore();
+            continue;
+        }
+
+        const pulse = 0.6 + 0.4 * Math.sin(now * 3 + mine.pulsePhase);
+        const size = mine.isMega ? 10 : 7;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, mine.aoeRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${mine.isMega ? "255,80,0" : "80,255,80"}, 0.07)`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.shadowColor = mine.isMega ? "#ff6600" : "#00ff88";
+        ctx.shadowBlur = 15 * pulse;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+        ctx.fillStyle = mine.isMega ? "#cc4400" : "#1a1a1a";
+        ctx.fill();
+        ctx.strokeStyle = mine.isMega ? "#ff8800" : "#00ff88";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, size * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = mine.isMega
+            ? `rgba(255,160,0,${pulse})`
+            : `rgba(0,255,120,${pulse})`;
+        ctx.fill();
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = `rgba(${mine.isMega ? "255,120,0" : "0,255,100"}, ${0.25 * pulse})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx - size * 1.8, sy); ctx.lineTo(sx + size * 1.8, sy);
+        ctx.moveTo(sx, sy - size * 1.8); ctx.lineTo(sx, sy + size * 1.8);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+export function drawPlayerSelectScreen(selectedChoice, bestTimes = {}) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.92)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -900,6 +1083,12 @@ export function drawPlayerSelectScreen(selectedChoice) {
             title: "ZAPPER",
             desc: "Zaps a random enemy in range instantly",
             icon: "Z",
+        },
+        {
+            key: "trapper",
+            title: "TRAPPER",
+            desc: "Places proximity mines",
+            icon: "T",
         },
     ];
 
@@ -953,8 +1142,41 @@ export function drawPlayerSelectScreen(selectedChoice) {
             }
         }
         ctx.fillText(line.trim(), x + cardW / 2, lineY);
-    });
 
+        const best = bestTimes[opt.key] || 0;
+        const MAX_TIME = 600;
+        const progress = Math.min(best / MAX_TIME, 1);
+
+        const barX = x + 10;
+        const barY = cardY + cardH - 28;
+        const barW = cardW - 20;
+        const barH = 6;
+
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.fillRect(barX, barY, barW, barH);
+
+        if (progress > 0) {
+            const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+            grad.addColorStop(0, isActive ? "#FFD700" : "#888");
+            grad.addColorStop(1, isActive ? "#ff8800" : "#555");
+            ctx.fillStyle = grad;
+            ctx.fillRect(barX, barY, barW * progress, barH);
+        }
+
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barW, barH);
+
+        ctx.font = "11px monospace";
+        ctx.fillStyle = best > 0 ? (isActive ? "#FFD700" : "#888") : "#444";
+        ctx.textAlign = "center";
+        ctx.fillText(
+            best > 0 ? `Best: ${Math.floor(best / 60)}m ${Math.floor(best % 60)}s` : "No record",
+            x + cardW / 2,
+            barY + barH + 14
+        );
+    });
+    
     ctx.font = "16px monospace";
     ctx.fillStyle = "#aaa";
     ctx.textAlign = "center";

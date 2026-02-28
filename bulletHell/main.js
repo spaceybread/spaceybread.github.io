@@ -1,6 +1,7 @@
 const gameModules = {
     "shooter": "./shooter.js",
-    "zapper": "./bolter.js",
+    "zapper":  "./bolter.js",
+    "trapper": "./trapper.js",
 };
 
 import {
@@ -21,7 +22,8 @@ import {
     drawParticles,
     drawPlayerSelectScreen,
     drawEnemyBullets,
-    drawLasers
+    drawLasers,
+    drawMines
 } from "./graphics.js";
 
 const canvas = document.getElementById("game");
@@ -38,9 +40,17 @@ window.addEventListener("resize", () => {
 
 initGraphics(canvas, ctx);
 
+function getBestTimes() {
+    return {
+        shooter: parseFloat(localStorage.getItem("bestTime_shooter") || "0"),
+        zapper:  parseFloat(localStorage.getItem("bestTime_zapper")  || "0"),
+        trapper: parseFloat(localStorage.getItem("bestTime_trapper") || "0"),
+    };
+}
+
 let menuActive = true;
 let menuChoice = "shooter";
-const menuOptions = ["shooter", "zapper"];
+const menuOptions = ["shooter", "zapper", "trapper"]; 
 
 let logic = null; 
 
@@ -86,7 +96,7 @@ function gameLoop(now) {
     if (menuActive || !logic) {
         ctx.fillStyle = "#0a0a0f";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        drawPlayerSelectScreen(menuChoice);
+        drawPlayerSelectScreen(menuChoice, getBestTimes()); 
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -95,23 +105,37 @@ function gameLoop(now) {
 
     const state = logic.getState();
 
+    if (state.gameOver && !state._bestTimeSaved) {
+        const key = `bestTime_${state.playerChoice}`;
+        const prev = parseFloat(localStorage.getItem(key) || "0");
+        if (state.timeAlive > prev) {
+            localStorage.setItem(key, state.timeAlive.toFixed(1));
+        }
+        state._bestTimeSaved = true; 
+    }
+
     drawWorld(state.camera);
     drawPlayer(state.player, state.camera, state);
     drawEnemies(state.enemies, state.camera);
-    if (state.playerChoice === "zapper") {
+
+    if (state.playerChoice === "trapper") {
+        drawMines(state.mines, state.camera);
+        drawParticles(state.particles, state.camera); 
+    } else if (state.playerChoice === "zapper") {
         drawParticles(state.particles, state.camera);
     } else {
         drawBullets(state.bullets, state.camera);
     }
     drawUI(state);
     drawStatsPanel(state);
-    drawHand(state.hand, state.selected, state.activeIndex);
     drawItems(state.items, state.camera);
     drawNotifications(state.notifications);
-    drawHandPreview(state.hand, state.selected);
+    
     drawEnemyBullets(state.enemyBullets, state.camera);
     drawLasers(state.lasers, state.camera);
 
+    drawHand(state.hand, state.selected, state.activeIndex);
+    drawHandPreview(state.hand, state.selected);
     if (state.draft) {
         drawDraftScreen(state);
     } else if (state.paused) {
