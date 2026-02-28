@@ -1,6 +1,6 @@
 const gameModules = {
     "shooter": "./shooter.js",
-    "bolter": "./bolter.js",
+    "zapper": "./bolter.js",
 };
 
 import {
@@ -19,7 +19,9 @@ import {
     drawDraftScreen,
     drawHandPreview,
     drawParticles,
-    drawPlayerSelectScreen
+    drawPlayerSelectScreen,
+    drawEnemyBullets,
+    drawLasers
 } from "./graphics.js";
 
 const canvas = document.getElementById("game");
@@ -38,7 +40,7 @@ initGraphics(canvas, ctx);
 
 let menuActive = true;
 let menuChoice = "shooter";
-const menuOptions = ["shooter", "bolter"];
+const menuOptions = ["shooter", "zapper"];
 
 let logic = null; 
 
@@ -56,7 +58,6 @@ document.addEventListener("keydown", async e => {
             logic = await import(gameModules[menuChoice]);
             logic.initLogic(canvas);
 
-            // Attach game listeners only after menu is done
             gameKeyHandler = e => {
                 if (e.key.toLowerCase() === "r") {
                     const state = logic.getState();
@@ -71,7 +72,7 @@ document.addEventListener("keydown", async e => {
             document.addEventListener("keyup", gameKeyUpHandler);
             document.addEventListener("mousemove", gameMouseHandler);
         }
-        return; // always block menu keys from reaching game
+        return;
     }
 });
 let lastTime = performance.now();
@@ -97,7 +98,7 @@ function gameLoop(now) {
     drawWorld(state.camera);
     drawPlayer(state.player, state.camera, state);
     drawEnemies(state.enemies, state.camera);
-    if (state.playerChoice === "bolter") {
+    if (state.playerChoice === "zapper") {
         drawParticles(state.particles, state.camera);
     } else {
         drawBullets(state.bullets, state.camera);
@@ -108,6 +109,8 @@ function gameLoop(now) {
     drawItems(state.items, state.camera);
     drawNotifications(state.notifications);
     drawHandPreview(state.hand, state.selected);
+    drawEnemyBullets(state.enemyBullets, state.camera);
+    drawLasers(state.lasers, state.camera);
 
     if (state.draft) {
         drawDraftScreen(state);

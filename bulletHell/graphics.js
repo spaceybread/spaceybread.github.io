@@ -1,4 +1,6 @@
-import { evaluateHand } from "./logic.js";
+import { BasePlayerLogic } from "./logic.js";
+const _evalInstance = new BasePlayerLogic();
+const evaluateHand = (cards) => _evalInstance.evaluateHand(cards);
 
 
 let canvas, ctx;
@@ -150,10 +152,54 @@ export function drawEnemies(enemies, camera) {
         const sy = e.y - camera.y;
         const s = e.size;
 
+        if (e.type === "tank" && e.auraRadius) {
+            const time = performance.now() * 0.005;
+        
+            const pulse = Math.sin(time * 3) * 4;
+            const radius = e.auraRadius + pulse;
+        
+            ctx.save();
+        
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "rgba(180, 0, 255, 0.8)";
+        
+            ctx.beginPath();
+            ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(200, 0, 255, 0.6)";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        
+            const segments = 20;
+            ctx.beginPath();
+            for (let i = 0; i <= segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                const noise = (Math.random() - 0.5) * 8;
+                const r = radius + noise;
+        
+                const x = sx + Math.cos(angle) * r;
+                const y = sy + Math.sin(angle) * r;
+        
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = "rgba(180, 0, 255, 0.9)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        
+            ctx.restore();
+        }
+
         ctx.fillStyle = "rgba(0,0,0,0.4)";
         ctx.fillRect(sx - s / 2 + 3, sy - s / 2 + 3, s, s);
 
-        ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "purple";
+        if (e.type === "tank") {
+            ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "#6a0dad";
+        } else if (e.type === "shooter") {
+            ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "#cc3300";
+        } else {
+            ctx.fillStyle = e.hitTimer > 0 ? "#ff00ff" : "purple";
+        }
         ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
 
         if (e.hitTimer > 0) {
@@ -167,8 +213,111 @@ export function drawEnemies(enemies, camera) {
         const by = sy - s / 2 - 8;
         ctx.fillStyle = "#333";
         ctx.fillRect(bx, by, barW, barH);
-        ctx.fillStyle = "#e53935";
+        ctx.fillStyle = e.type === "tank" ? "#9c27b0" : "#e53935";
         ctx.fillRect(bx, by, barW * (e.health / e.maxHealth), barH);
+    }
+}
+
+export function drawEnemyBullets(enemyBullets, camera) {
+    for (const b of enemyBullets) {
+        const sx = b.x - camera.x;
+        const sy = b.y - camera.y;
+
+        ctx.save();
+        ctx.shadowColor = "#ff4400";
+        ctx.shadowBlur = 10;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 5, 0, Math.PI * 2);
+        ctx.fillStyle = "#ff6600";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+export function drawLasers(lasers, camera) {
+    for (const laser of lasers) {
+        const x1 = laser.x1 - camera.x;
+        const y1 = laser.y1 - camera.y;
+        const x2 = laser.x2 - camera.x;
+        const y2 = laser.y2 - camera.y;
+
+        if (laser.phase === "warning") {
+            const progress = 1 - (laser.timer / laser.warningDuration);
+            const pulse = 0.4 + 0.3 * Math.sin(progress * Math.PI * 8);
+
+            ctx.save();
+            ctx.setLineDash([20, 12]);
+            ctx.strokeStyle = `rgba(255, 80, 0, ${pulse})`;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = "#ff4400";
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            if (progress > 0.6) {
+                const fadeIn = (progress - 0.6) / 0.4;
+                ctx.strokeStyle = `rgba(255, 220, 100, ${fadeIn * 0.6})`;
+                ctx.lineWidth = laser.width * fadeIn;
+                ctx.shadowBlur = 30 * fadeIn;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+            ctx.restore();
+
+            const totalLen = Math.hypot(x2 - x1, y2 - y1);
+            const steps = Math.floor(totalLen / 80);
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const tx = x1 + (x2 - x1) * t;
+                const ty = y1 + (y2 - y1) * t;
+                ctx.beginPath();
+                ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 160, 0, ${pulse})`;
+                ctx.fill();
+            }
+
+        } else if (laser.phase === "active") {
+            const fade = laser.timer / laser.activeDuration;
+
+            ctx.save();
+            ctx.shadowColor = "white";
+            ctx.shadowBlur = 60;
+
+            ctx.strokeStyle = `rgba(255, 100, 0, ${fade * 0.5})`;
+            ctx.lineWidth = laser.width * 2.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = `rgba(255, 220, 100, ${fade})`;
+            ctx.lineWidth = laser.width;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = `rgba(255, 255, 255, ${fade})`;
+            ctx.lineWidth = laser.width * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
     }
 }
 
@@ -747,8 +896,8 @@ export function drawPlayerSelectScreen(selectedChoice) {
             icon: "X",
         },
         {
-            key: "bolter",
-            title: "BOLTER",
+            key: "zapper",
+            title: "ZAPPER",
             desc: "Zaps a random enemy in range instantly",
             icon: "Z",
         },
