@@ -59,6 +59,8 @@ export class BasePlayerLogic {
         this._truePlayerSpeed = 200;
         this.sessionCoins = 0;
         this.coins = 0;
+        this.suitStreak = { suit: null, count: 0 };
+        this.suitMomentumMultiplier = 1;
 
         this.POWERUPS = [
             { name: "Speed Boost",   desc: "+25 speed for 10s",   apply: () => { this.playerSpeed += 25;      this._addTempEffect(() => this.playerSpeed -= 25, 10); } },
@@ -169,6 +171,13 @@ export class BasePlayerLogic {
             return p.life > 0;
         });
 
+        for (const card of this.hand) {
+            if (!card.age) card.age = 0;
+            card.age += delta;
+        }
+
+        this._sortHand(); 
+
         this._spawnEnemies(delta);
         this._updateEnemies(delta);
         this._updateBullets(delta);
@@ -235,6 +244,8 @@ export class BasePlayerLogic {
             lasers: this.lasers,
             sessionCoins: this.sessionCoins,
             coins: parseInt(localStorage.getItem("coins") || "0"),
+            suitStreak: this.suitStreak,
+            suitMomentumMultiplier: this.suitMomentumMultiplier,
         };
     }
 
@@ -287,6 +298,8 @@ export class BasePlayerLogic {
         this._truePlayerSpeed = 200;
         this.sessionCoins = 0;
         this.coins = 0;
+        this.suitStreak = { suit: null, count: 0 };
+        this.suitMomentumMultiplier = 1;
 
     }
 
@@ -310,7 +323,9 @@ export class BasePlayerLogic {
         return array;
     }
 
-    _sortHand() { this.hand.sort((a, b) => b.value - a.value); }
+    _sortHand() {
+        this.hand.sort((a, b) => this._getDegradedValue(b) - this._getDegradedValue(a));
+    }
 
     _addNotification(title, subtitle) {
         this.notifications.push({ title, subtitle, timer: 2.5 });
@@ -414,8 +429,20 @@ export class BasePlayerLogic {
         this._sortHand();
     }
 
-    _scoreSelectedCards(cards) {
-        cards = [...cards].sort((a, b) => b.value - a.value);
+    _getDegradedValue(card) {
+        const AGE_THRESHOLD = 20;
+        const AGE_MAX = 60;
+        if (!card.age || card.age < AGE_THRESHOLD) return card.value;
+        const t = Math.min(1, (card.age - AGE_THRESHOLD) / (AGE_MAX - AGE_THRESHOLD));
+        return Math.max(2, card.value - Math.floor(t * 4));
+    }
+
+    _scoreSelectedCards(rawCards) {
+        const cards = rawCards.map(card => ({
+            ...card,
+            value: this._getDegradedValue(card),
+        })).sort((a, b) => b.value - a.value);
+        
         const result = this.evaluateHand(cards);
         this.playedHand = result;
         const freq = {};
@@ -500,6 +527,38 @@ export class BasePlayerLogic {
         if (diamonds) parts.push(`♦ +${diamonds} spd`);
         if (parts.length > 0)
             this._addNotification("Suit Bonus", parts.join(" · "));
+
+        const dominantSuit = Object.entries(suitCounts).sort((a, b) => b[1] - a[1])[0];
+        const dominantSuitName = dominantSuit[1] >= 3 ? dominantSuit[0] : null; 
+
+        if (dominantSuitName && dominantSuitName === this.suitStreak.suit) {
+            this.suitStreak.count++;
+        } else if (dominantSuitName) {
+            this.suitStreak = { suit: dominantSuitName, count: 1 };
+        } else {
+            this.suitStreak = { suit: null, count: 0 };
+            this.suitMomentumMultiplier = 1;
+        }
+
+        if (this.suitStreak.count >= 2) {
+            const prevMultiplier = this.suitMomentumMultiplier;
+            this.suitMomentumMultiplier = 1 + (this.suitStreak.count - 1) * 0.25;
+            this.suitMomentumMultiplier = Math.min(2, this.suitMomentumMultiplier);
+            
+            const suitNames = { "♥": "Hearts", "♠": "Spades", "♣": "Clubs", "♦": "Diamonds" };
+            this._addNotification(
+                `${dominantSuitName} MOMENTUM x${this.suitStreak.count}`,
+                `${suitNames[dominantSuitName]} bonus ×${this.suitMomentumMultiplier.toFixed(1)}`
+            );
+        }
+
+        if (this.suitMomentumMultiplier > 1 && dominantSuitName) {
+            const bonus = this.suitMomentumMultiplier - 1;
+            if (dominantSuitName === "♥") this.playerHealth = Math.min(this.maxPlayerHealth, this.playerHealth + Math.floor(hearts * bonus));
+            if (dominantSuitName === "♠") this.bulletDamage += spades * bonus;
+            if (dominantSuitName === "♣") this.shootInterval = Math.max(0.1, this.shootInterval - clubs * 0.05 * bonus);
+            if (dominantSuitName === "♦") this.playerSpeed += diamonds * bonus;
+        }
     }
 
     _spawnEnemies(delta) {
@@ -556,7 +615,7 @@ export class BasePlayerLogic {
 
     _updateBossSpawning(delta) {
         this._bossTimer -= delta;
-        let c = Math.ceil((performance.now() - this.startTime) / (1000 * 200)); 
+        let c = Math.floor((performance.now() - this.startTime) / (1000 * 100)); 
         
         if (this._bossTimer <= 0) {
             for (; c > 0; c--) {

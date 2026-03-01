@@ -479,78 +479,108 @@ export function drawLasers(lasers, camera) {
 export function drawHand(hand, selected, activeIndex) {
     const cardWidth = 100;
     const cardHeight = 150;
-    const spacing = 20;
+    const maxHandWidth = canvas.width * 0.85;
+    const minSpacing = -90; 
 
-    const totalWidth =
-        hand.length * cardWidth + (hand.length - 1) * spacing;
+    const naturalWidth = hand.length * cardWidth + (hand.length - 1) * 20;
+    const spacing = naturalWidth > maxHandWidth
+        ? Math.max(minSpacing, (maxHandWidth - cardWidth) / (hand.length - 1) - cardWidth)
+        : 20;
 
+    const totalWidth = cardWidth + (hand.length - 1) * (cardWidth + spacing);
     const startX = canvas.width / 2 - totalWidth / 2;
     const baseY = canvas.height - cardHeight - 20;
 
     hand.forEach((card, i) => {
         const x = startX + i * (cardWidth + spacing);
-
         const isActive = i === activeIndex;
         const isSelected = selected.has(i);
-
         const lift = isActive ? -20 : 0;
 
-        drawCard(
-            x,
-            baseY + lift + 75,
-            cardWidth,
-            cardHeight,
-            card,
-            isSelected
-        );
+        drawCard(x, baseY + lift + 75, cardWidth, cardHeight, card, isSelected);
     });
 }
 
 function drawCard(x, y, w, h, card, isSelected) {
+    const AGE_THRESHOLD = 20;
+    const AGE_MAX = 60;
+    const age = card.age || 0;
+    const degradation = age < AGE_THRESHOLD ? 0 : Math.min(1, (age - AGE_THRESHOLD) / (AGE_MAX - AGE_THRESHOLD));
 
-    let colorMap = {
-        "♥": "red", 
-        "♦": "orange", 
-        "♠": "black",
-        "♣": "blue" 
-    }
+    const colorMap = {
+        "♥": "red", "♦": "orange", "♠": "black", "♣": "blue"
+    };
+    const rankMap = { 14: "A", 11: "J", 12: "Q", 13: "K" };
+
+    const displayValue = Math.max(2, card.value - Math.floor(degradation * 4));
+    const displayRank = rankMap[displayValue] || String(displayValue);
 
     ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(x + 4, y + 4, w, h);   
-    
+    ctx.fillRect(x + 4, y + 4, w, h);
+
     ctx.fillStyle = isSelected ? "#FFD700" : "white";
     ctx.fillRect(x, y, w, h);
-
-    
 
     ctx.strokeStyle = "black";
     ctx.lineWidth = 3;
     ctx.strokeRect(x, y, w, h);
 
-
-
-    ctx.fillStyle = colorMap[card.suit]; 
+    if (degradation > 0) {
+        const posInInterval = (degradation % 0.25) / 0.25;
+        const barFill = 1 - posInInterval;
+        const barColor = barFill > 0.5 ? "#2a8a2a"
+                       : barFill > 0.2 ? "#cc7700"
+                       : "#cc2200";
+    
+        const cx = x + 14;
+        const cy = y + 52;
+        const radius = 5;
+        const thickness = 2.5;
+    
+        ctx.beginPath();
+        ctx.arc(cx - 1, cy, radius + 1.5, 0, Math.PI * 2);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    
+        ctx.beginPath();
+        ctx.arc(cx - 1, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.lineWidth = thickness;
+        ctx.stroke();
+    
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + (Math.PI * 2 * barFill);
+        ctx.beginPath();
+        ctx.arc(cx - 1, cy, radius, startAngle, endAngle);
+        ctx.strokeStyle = barColor;
+        ctx.lineWidth = thickness;
+        ctx.stroke();
+    }
 
     ctx.font = "bold 18px monospace";
     ctx.textAlign = "left";
-    ctx.fillText(card.rank, x + 8, y + 22);
+    ctx.fillStyle = colorMap[card.suit];
+    ctx.fillText(displayRank, x + 8, y + 22);
 
     ctx.font = "16px monospace";
     ctx.fillText(card.suit, x + 8, y + 40);
+
+    ctx.font = "48px monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = colorMap[card.suit];
+    ctx.fillText(card.suit, x + w / 2, y + h / 2 + 15);
 
     ctx.save();
     ctx.translate(x + w - 8, y + h - 8);
     ctx.rotate(Math.PI);
     ctx.textAlign = "left";
     ctx.font = "bold 18px monospace";
-    ctx.fillText(card.rank, 0, -10);
+    ctx.fillStyle = colorMap[card.suit];
+    ctx.fillText(displayRank, 0, -10);
     ctx.font = "16px monospace";
     ctx.fillText(card.suit, 0, 8);
     ctx.restore();
-
-    ctx.font = "48px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(card.suit, x + w / 2, y + h / 2 + 15);
 }
 
 export function drawBullets(bullets, camera) {
