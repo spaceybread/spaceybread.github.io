@@ -398,8 +398,11 @@ export class BasePlayerLogic {
         this.activeIndex = 0;
     }
 
-    evaluateHand(cards) {
-        cards = [...cards].sort((a, b) => b.value - a.value);
+    evaluateHand(rawCards) {
+        const cards = rawCards.map(card => ({
+            ...card,
+            value: this._getDegradedValue(card),
+        })).sort((a, b) => b.value - a.value);
         const isFlush = cards.every(c => c.suit === cards[0].suit);
         let isStraight = true;
         if (cards[0].value === 14 && cards[1].value === 5) {
