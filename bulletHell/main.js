@@ -28,6 +28,11 @@ import {
 } from "./graphics.js";
 
 import { 
+    initCRT, 
+    drawCRTFilter 
+} from "./crt_filter.js";
+
+import { 
     SHOP_ITEMS, 
     getOwnedLevels, 
     buyItem, 
@@ -53,6 +58,7 @@ let _shopResetConfirm = false;
 
 
 initGraphics(canvas, ctx);
+initCRT(canvas, ctx);
 
 function getShopState() {
     return {
@@ -144,6 +150,7 @@ function gameLoop(now) {
 
     if (shopActive) {
         drawShopScreen(getShopState());
+        drawCRTFilter();
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -152,6 +159,7 @@ function gameLoop(now) {
         ctx.fillStyle = "#0a0a0f";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         drawPlayerSelectScreen(menuChoice, getBestTimes()); 
+        drawCRTFilter();
         requestAnimationFrame(gameLoop);
         return;
     }
@@ -201,6 +209,7 @@ function gameLoop(now) {
         drawGameOverScreen(state);
     }
 
+    drawCRTFilter();
     requestAnimationFrame(gameLoop);
 }
 

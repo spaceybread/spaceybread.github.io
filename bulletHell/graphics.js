@@ -31,26 +31,149 @@ export function initGraphics(c, context) {
     canvas = c;
     ctx = context;
 
-    grassTile = createTileTexture(["#2e7d32", "#388e3c", "#1b5e20"]);
-    darkGrassTile = createTileTexture(["#1b5e20", "#0f3d13"]);
-    dirtTile = createTileTexture(["#6d4c41", "#5d4037"]);
-    stoneTile = createTileTexture(["#888888", "#919191"]);
+    grassTile     = createTileTexture(["#2e7d32", "#388e3c", "#1b5e20", "#33691e", "#2e7d32"], { type: "grass" });
+    darkGrassTile = createTileTexture(["#1b5e20", "#0f3d13", "#1a4a10", "#163d0f"], { type: "darkgrass" });
+    dirtTile      = createTileTexture(["#6d4c41", "#5d4037", "#795548", "#4e342e"], { type: "dirt" });
+    stoneTile     = createTileTexture(["#757575", "#616161", "#9e9e9e", "#6d6d6d", "#555"], { type: "stone" });
 }
 
-function createTileTexture(colors) {
+function rnd(min, max) { return min + Math.random() * (max - min); }
+function rndInt(min, max) { return Math.floor(rnd(min, max + 1)); }
+
+function createTileTexture(colors, options = {}) {
+    const size = 48;
     const off = document.createElement("canvas");
-    off.width = 16;
-    off.height = 16;
+    off.width = size;
+    off.height = size;
     const octx = off.getContext("2d");
     octx.imageSmoothingEnabled = false;
 
-    for (let x = 0; x < 16; x++) {
-        for (let y = 0; y < 16; y++) {
-            const c = colors[Math.floor(Math.random() * colors.length)];
-            octx.fillStyle = c;
-            octx.fillRect(x, y, 1, 1);
+    for (let x = 0; x < size; x += 2) {
+        for (let y = 0; y < size; y += 2) {
+            octx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+            octx.fillRect(x, y, 2, 2);
         }
     }
+
+    const type = options.type || "grass";
+
+    if (type === "grass") {
+        const tuftCount = rndInt(3, 6);
+        for (let i = 0; i < tuftCount; i++) {
+            const tx = rndInt(4, size - 6);
+            const ty = rndInt(8, size - 4);
+            const h = rndInt(3, 7);
+            octx.fillStyle = Math.random() < 0.5 ? "rgba(80,160,40,0.55)" : "rgba(20,80,10,0.5)";
+            octx.fillRect(tx, ty - h, 2, h);
+            if (Math.random() < 0.5) {
+                octx.fillRect(tx + (Math.random() < 0.5 ? -2 : 2), ty - h + 2, 2, h - 2);
+            }
+        }
+        if (Math.random() < 0.25) {
+            octx.fillStyle = Math.random() < 0.5 ? "rgba(255,220,80,0.7)" : "rgba(255,255,255,0.5)";
+            const fx = rndInt(6, size - 6);
+            const fy = rndInt(6, size - 6);
+            octx.fillRect(fx, fy, 2, 2);
+        }
+    }
+
+    if (type === "darkgrass") {
+        const patchCount = rndInt(2, 4);
+        for (let i = 0; i < patchCount; i++) {
+            const px = rndInt(4, size - 10);
+            const py = rndInt(4, size - 10);
+            const pw = rndInt(4, 10);
+            const ph = rndInt(3, 7);
+            octx.fillStyle = "rgba(10,50,8,0.45)";
+            octx.fillRect(px, py, pw, ph);
+        }
+        for (let i = 0; i < rndInt(2, 4); i++) {
+            const tx = rndInt(4, size - 4);
+            const ty = rndInt(6, size - 2);
+            octx.fillStyle = "rgba(30,100,15,0.6)";
+            octx.fillRect(tx, ty - rndInt(2, 5), 2, rndInt(2, 5));
+        }
+    }
+
+    if (type === "dirt") {
+        const pebbleCount = rndInt(3, 7);
+        for (let i = 0; i < pebbleCount; i++) {
+            const px = rndInt(4, size - 6);
+            const py = rndInt(4, size - 6);
+            const pw = rndInt(3, 7);
+            const ph = rndInt(2, 4);
+            octx.fillStyle = Math.random() < 0.5
+                ? "rgba(80,55,40,0.5)"
+                : "rgba(120,90,60,0.4)";
+            octx.fillRect(px, py, pw, ph);
+            octx.fillStyle = "rgba(200,160,110,0.25)";
+            octx.fillRect(px, py, pw - 1, 1);
+        }
+        if (Math.random() < 0.5) {
+            octx.strokeStyle = "rgba(60,40,25,0.4)";
+            octx.lineWidth = 1;
+            octx.beginPath();
+            const cx = rndInt(8, size - 8);
+            const cy = rndInt(8, size - 8);
+            octx.moveTo(cx, cy);
+            octx.lineTo(cx + rndInt(-10, 10), cy + rndInt(4, 10));
+            octx.stroke();
+        }
+    }
+
+    if (type === "stone") {
+        const blockW = rndInt(16, 28);
+        const blockH = rndInt(12, 20);
+        const offX = rndInt(0, blockW);
+        const offY = rndInt(0, blockH);
+        octx.strokeStyle = "rgba(40,40,40,0.5)";
+        octx.lineWidth = 1;
+        for (let y = (offY % blockH); y < size; y += blockH) {
+            octx.beginPath(); octx.moveTo(0, y); octx.lineTo(size, y); octx.stroke();
+        }
+        for (let row = 0; row * blockH < size + blockH; row++) {
+            const rowOffX = row % 2 === 0 ? offX : offX + blockW / 2;
+            for (let x = (rowOffX % blockW) - blockW; x < size + blockW; x += blockW) {
+                const y0 = row * blockH + offY % blockH;
+                octx.beginPath(); octx.moveTo(x, y0); octx.lineTo(x, y0 + blockH); octx.stroke();
+            }
+        }
+        if (Math.random() < 0.6) {
+            octx.strokeStyle = "rgba(20,20,20,0.35)";
+            octx.lineWidth = 1;
+            const cx = rndInt(10, size - 10);
+            const cy = rndInt(10, size - 10);
+            octx.beginPath();
+            octx.moveTo(cx, cy);
+            octx.lineTo(cx + rndInt(-8, 8), cy + rndInt(-8, 8));
+            octx.lineTo(cx + rndInt(-4, 12), cy + rndInt(4, 14));
+            octx.stroke();
+        }
+        octx.fillStyle = "rgba(255,255,255,0.06)";
+        octx.fillRect(0, 0, size, 2);
+        octx.fillRect(0, 0, 2, size);
+    }
+
+    octx.fillStyle = "rgba(0,0,0,0.12)";
+    for (let i = 0; i < 14; i++) {
+        octx.fillRect(rndInt(0, size - 1), rndInt(0, size - 1), rndInt(1, 3), 1);
+    }
+    octx.fillStyle = "rgba(255,255,255,0.06)";
+    for (let i = 0; i < 7; i++) {
+        octx.fillRect(rndInt(0, size - 1), rndInt(0, size - 1), 1, 1);
+    }
+
+    octx.strokeStyle = "rgba(0,0,0,0.20)";
+    octx.lineWidth = 1;
+    octx.beginPath();
+    octx.moveTo(0, 0); octx.lineTo(size, 0);
+    octx.moveTo(0, 0); octx.lineTo(0, size);
+    octx.stroke();
+    octx.strokeStyle = "rgba(255,255,255,0.05)";
+    octx.beginPath();
+    octx.moveTo(size - 1, 0); octx.lineTo(size - 1, size);
+    octx.moveTo(0, size - 1); octx.lineTo(size, size - 1);
+    octx.stroke();
 
     return off;
 }
@@ -108,6 +231,11 @@ export function drawWorld(camera) {
                 TILE_SIZE,
                 TILE_SIZE
             );
+
+            if (noise < 0.1) {
+                ctx.fillStyle = "rgba(0,0,0,0.18)";
+                ctx.fillRect(x * TILE_SIZE - camera.x, y * TILE_SIZE - camera.y, TILE_SIZE, TILE_SIZE);
+            }
         }
     }
 }
@@ -116,43 +244,121 @@ export function drawPlayer(player, camera, state) {
     const sx = player.x - camera.x;
     const sy = player.y - camera.y;
     const s = player.size;
+    const now = performance.now() * 0.001;
+    const hit = state.playerHitTimer > 0;
+    const choice = state.playerChoice || "shooter";
 
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillRect(sx - s / 2 + 3, sy - s / 2 + 3, s, s);
+    const palette = {
+        shooter: { body: "#c0392b", accent: "#e74c3c", glow: "#ff6644", visor: "#c0392b" },
+        zapper:  { body: "#1a237e", accent: "#3949ab", glow: "#66aaff", visor: "#1a237e" },
+        trapper: { body: "#1b5e20", accent: "#388e3c", glow: "#44ff88", visor: "#1b5e20" },
+    };
+    const pal = palette[choice] || palette.shooter;
 
-    ctx.fillStyle = state.playerHitTimer > 0 ? "#ff4444" : "red";
-    ctx.fillRect(sx - s / 2, sy - s / 2, s, s);
+    const bob = Math.sin(now * 3.2) * 1.8;
+    const tiltX = Math.sin(now * 2.1) * 0.03;
 
-    if (state.playerHitTimer > 0) {
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sx - s / 2, sy - s / 2, s, s);
+    ctx.save();
+    ctx.translate(sx, sy + bob);
+    ctx.rotate(tiltX);
+
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(-s / 2 + 4, -s / 2 + 4, s, s);
+
+    if (!hit) {
+        const glowAlpha = 0.18 + 0.08 * Math.sin(now * 2.5);
+        ctx.globalAlpha = glowAlpha;
+        ctx.fillStyle = pal.glow;
+        ctx.fillRect(-s / 2 - 4, -s / 2 - 4, s + 8, s + 8);
+        ctx.globalAlpha = 1;
     }
+
+    ctx.fillStyle = hit ? "#ffffff" : pal.body;
+    ctx.fillRect(-s / 2, -s / 2, s, s);
+
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.fillRect(-s / 2, -s / 2, s, 2);
+    ctx.fillRect(-s / 2, -s / 2, 2, s);
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.fillRect(-s / 2, s / 2 - 2, s, 2);
+    ctx.fillRect(s / 2 - 2, -s / 2, 2, s);
+
+    ctx.fillStyle = hit ? "rgba(255,255,255,0.5)" : pal.accent;
+    ctx.fillRect(-s / 2 + 3, -s / 2 + 3, s - 6, 5);
+
+    const vw = Math.floor(s * 0.55);
+    const vh = Math.floor(s * 0.18);
+    const vx = -Math.floor(vw / 2);
+    const vy = -Math.floor(s * 0.05);
+    ctx.fillStyle = hit ? "#ffffff" : pal.visor;
+    ctx.fillRect(vx, vy, vw, vh);
+    if (!hit) {
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        ctx.fillRect(vx + 2, vy + 1, Math.floor(vw * 0.35), 1);
+    }
+
+    if (choice === "shooter") {
+        if (state.nearestDir) {
+            const angle = Math.atan2(state.nearestDir.y, state.nearestDir.x);
+            ctx.save();
+            ctx.rotate(angle);
+            ctx.fillStyle = hit ? "white" : "#888888";
+            ctx.fillRect(Math.floor(s * 0.3), -3, Math.floor(s * 0.38), 6);
+            ctx.fillStyle = hit ? "white" : "#444444";
+            ctx.fillRect(Math.floor(s * 0.55), -4, Math.floor(s * 0.2), 8);
+            ctx.fillStyle = "rgba(255,255,255,0.3)";
+            ctx.fillRect(Math.floor(s * 0.55), -4, Math.floor(s * 0.2), 2);
+            ctx.restore();
+        }
+    } else if (choice === "zapper") {
+        ctx.fillStyle = hit ? "white" : "#aaaaaa";
+        ctx.fillRect(-2, -s / 2 - 9, 3, 9);
+        const orbSize = Math.sin(now * 6) > 0 ? 7 : 5;
+        const ox = -Math.floor(orbSize / 2);
+        const oy = -s / 2 - 9 - orbSize;
+        ctx.fillStyle = hit ? "white" : pal.visor;
+        ctx.fillRect(ox, oy, orbSize, orbSize);
+        ctx.fillStyle = "rgba(255,255,255,0.55)";
+        ctx.fillRect(ox, oy, orbSize, 1);
+        ctx.fillRect(ox, oy, 1, orbSize);
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(ox, oy + orbSize - 1, orbSize, 1);
+    } else if (choice === "trapper") {
+        const dotOn = Math.sin(now * 4) > 0;
+        ctx.fillStyle = hit ? "white" : (dotOn ? pal.visor : pal.accent);
+        ctx.fillRect(-s / 2 - 5, -2, 4, 4);
+        ctx.fillRect( s / 2 + 1, -2, 4, 4);
+        ctx.strokeStyle = "rgba(0,0,0,0.5)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-s / 2 - 5, -2, 4, 4);
+        ctx.strokeRect( s / 2 + 1, -2, 4, 4);
+    }
+
+    ctx.strokeStyle = hit ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.7)";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-s / 2, -s / 2, s, s);
+
+    ctx.restore();
 
     if (state.nearestDir) {
-        const tipDist = s / 2 + 3;
-        ctx.strokeStyle = state.playerHitTimer > 0 ? "white" : "rgba(255,255,255,0.8)";
-        ctx.lineWidth = 0.1;
-        ctx.beginPath();
-        ctx.moveTo(sx + state.nearestDir.x * (s / 2 + 2),
-                   sy + state.nearestDir.y * (s / 2 + 2));
-        ctx.lineTo(sx + state.nearestDir.x * tipDist,
-                   sy + state.nearestDir.y * tipDist);
-        ctx.stroke();
-
+        const tipDist = s / 2 + bob + 14;
         const angle = Math.atan2(state.nearestDir.y, state.nearestDir.x);
+        const ax = sx + state.nearestDir.x * tipDist;
+        const ay = sy + bob + state.nearestDir.y * tipDist;
+
+        ctx.save();
+        ctx.fillStyle = hit ? "white" : pal.glow;
+        ctx.globalAlpha = 0.85;
         ctx.beginPath();
-        ctx.moveTo(sx + state.nearestDir.x * tipDist,
-                   sy + state.nearestDir.y * tipDist);
-        ctx.lineTo(sx + Math.cos(angle + 2.5) * (tipDist - 5),
-                   sy + Math.sin(angle + 2.5) * (tipDist - 5));
-        ctx.lineTo(sx + Math.cos(angle - 2.5) * (tipDist - 5),
-                   sy + Math.sin(angle - 2.5) * (tipDist - 5));
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax + Math.cos(angle + 2.4) * 7, ay + Math.sin(angle + 2.4) * 7);
+        ctx.lineTo(ax + Math.cos(angle - 2.4) * 7, ay + Math.sin(angle - 2.4) * 7);
         ctx.closePath();
-        ctx.fillStyle = "rgba(255,255,255,0.8)";
         ctx.fill();
+        ctx.restore();
     }
 }
+
 
 export function drawEnemies(enemies, camera) {
     for (const e of enemies) {
@@ -402,75 +608,81 @@ export function drawLasers(lasers, camera) {
         const y1 = laser.y1 - camera.y;
         const x2 = laser.x2 - camera.x;
         const y2 = laser.y2 - camera.y;
+        const totalLen = Math.hypot(x2 - x1, y2 - y1);
+        const nx = (x2 - x1) / totalLen;
+        const ny = (y2 - y1) / totalLen;
 
         if (laser.phase === "warning") {
             const progress = 1 - (laser.timer / laser.warningDuration);
-            const pulse = 0.4 + 0.3 * Math.sin(progress * Math.PI * 8);
+            const pulse = Math.sin(progress * Math.PI * 8) > 0 ? 1 : 0.35;
 
-            ctx.save();
-            ctx.setLineDash([20, 12]);
-            ctx.strokeStyle = `rgba(255, 80, 0, ${pulse})`;
-            ctx.lineWidth = 3;
-            ctx.shadowColor = "#ff4400";
-            ctx.shadowBlur = 12;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            const segLen = 16;
+            const gapLen = 10;
+            const period = segLen + gapLen;
+            let dist = 0;
+            ctx.fillStyle = `rgba(255, 80, 0, ${pulse * 0.9})`;
+            while (dist < totalLen) {
+                const segEnd = Math.min(dist + segLen, totalLen);
+                const sx1 = x1 + nx * dist;
+                const sy1 = y1 + ny * dist;
+                const sx2 = x1 + nx * segEnd;
+                const sy2 = y1 + ny * segEnd;
+                ctx.save();
+                ctx.translate((sx1 + sx2) / 2, (sy1 + sy2) / 2);
+                ctx.rotate(Math.atan2(ny, nx));
+                ctx.fillRect(-(segEnd - dist) / 2, -1, segEnd - dist, 3);
+                ctx.restore();
+                dist += period;
+            }
+
+            const dotSpacing = 40;
+            const dotSteps = Math.floor(totalLen / dotSpacing);
+            ctx.fillStyle = `rgba(255, 200, 0, ${pulse})`;
+            for (let i = 0; i <= dotSteps; i++) {
+                const t = i / dotSteps;
+                const tx = x1 + (x2 - x1) * t;
+                const ty = y1 + (y2 - y1) * t;
+                ctx.fillRect(Math.round(tx) - 2, Math.round(ty) - 2, 4, 4);
+            }
 
             if (progress > 0.6) {
                 const fadeIn = (progress - 0.6) / 0.4;
-                ctx.strokeStyle = `rgba(255, 220, 100, ${fadeIn * 0.6})`;
-                ctx.lineWidth = laser.width * fadeIn;
-                ctx.shadowBlur = 30 * fadeIn;
-                ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.stroke();
-            }
-            ctx.restore();
-
-            const totalLen = Math.hypot(x2 - x1, y2 - y1);
-            const steps = Math.floor(totalLen / 80);
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const tx = x1 + (x2 - x1) * t;
-                const ty = y1 + (y2 - y1) * t;
-                ctx.beginPath();
-                ctx.arc(tx, ty, 3, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 160, 0, ${pulse})`;
-                ctx.fill();
+                const steps = Math.floor(totalLen / 4);
+                for (let i = 0; i < steps; i++) {
+                    const t = i / steps;
+                    if (Math.random() > fadeIn * 0.6) continue; 
+                    const tx = Math.round(x1 + (x2 - x1) * t);
+                    const ty = Math.round(y1 + (y2 - y1) * t);
+                    ctx.fillStyle = `rgba(255, 240, 180, ${fadeIn})`;
+                    ctx.fillRect(tx - 1, ty - 1, 2, 2);
+                }
             }
 
         } else if (laser.phase === "active") {
             const fade = laser.timer / laser.activeDuration;
+            const w = laser.width;
+
+            const glowSteps = 3;
+            for (let g = glowSteps; g >= 1; g--) {
+                const gw = w * (1 + g * 1.2);
+                const alpha = (fade * 0.18) / g;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = "#ff6600";
+                ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
+                ctx.rotate(Math.atan2(ny, nx));
+                ctx.fillRect(-totalLen / 2, -gw / 2, totalLen, gw);
+                ctx.restore();
+            }
 
             ctx.save();
-            ctx.shadowColor = "white";
-            ctx.shadowBlur = 60;
-
-            ctx.strokeStyle = `rgba(255, 100, 0, ${fade * 0.5})`;
-            ctx.lineWidth = laser.width * 2.5;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-
-            ctx.strokeStyle = `rgba(255, 220, 100, ${fade})`;
-            ctx.lineWidth = laser.width;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-
-            ctx.strokeStyle = `rgba(255, 255, 255, ${fade})`;
-            ctx.lineWidth = laser.width * 0.3;
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-
+            ctx.globalAlpha = fade;
+            ctx.fillStyle = "#ffdd44";
+            ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
+            ctx.rotate(Math.atan2(ny, nx));
+            ctx.fillRect(-totalLen / 2, -Math.ceil(w / 2), totalLen, w);
+            ctx.fillStyle = `rgba(255,255,255,${fade})`;
+            ctx.fillRect(-totalLen / 2, -1, totalLen, 2);
             ctx.restore();
         }
     }
@@ -491,13 +703,27 @@ export function drawHand(hand, selected, activeIndex) {
     const startX = canvas.width / 2 - totalWidth / 2;
     const baseY = canvas.height - cardHeight - 20;
 
+    const now = performance.now() * 0.001;
+
     hand.forEach((card, i) => {
         const x = startX + i * (cardWidth + spacing);
         const isActive = i === activeIndex;
         const isSelected = selected.has(i);
-        const lift = isActive ? -20 : 0;
 
-        drawCard(x, baseY + lift + 75, cardWidth, cardHeight, card, isSelected);
+        const phase = i * 0.72 + (card.suit?.charCodeAt(0) ?? 0) * 0.1;
+        const floatY  = Math.sin(now * 1.4 + phase) * 4;
+        const floatRot = Math.sin(now * 1.1 + phase + 1.2) * 0.018;
+
+        const lift = isActive ? -20 : 0;
+        const finalY = baseY + lift + 75 + floatY;
+
+        ctx.save();
+        ctx.translate(x + cardWidth / 2, finalY + cardHeight / 2);
+        ctx.rotate(floatRot);
+        ctx.translate(-(x + cardWidth / 2), -(finalY + cardHeight / 2));
+
+        drawCard(x, finalY, cardWidth, cardHeight, card, isSelected);
+        ctx.restore();
     });
 }
 
@@ -585,87 +811,113 @@ function drawCard(x, y, w, h, card, isSelected) {
 
 export function drawBullets(bullets, camera) {
     for (const b of bullets) {
-        const sx = b.x - camera.x;
-        const sy = b.y - camera.y;
-
-        ctx.save();
-        ctx.shadowColor = "#ffaa00";
-        ctx.shadowBlur = 15;
-
-        ctx.beginPath();
-        ctx.arc(sx, sy, 7, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255, 180, 0, 0.3)";
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(sx, sy, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#ffdd00";
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(sx, sy, 2, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
-        ctx.fill();
-
-        ctx.restore();
+        const sx = Math.round(b.x - camera.x);
+        const sy = Math.round(b.y - camera.y);
 
         const speed = Math.hypot(b.vx, b.vy);
+
         if (speed > 0) {
             const nx = b.vx / speed;
             const ny = b.vy / speed;
-            const grad = ctx.createLinearGradient(
-                sx, sy,
-                sx - nx * 18, sy - ny * 18
-            );
-            grad.addColorStop(0, "rgba(255, 200, 0, 0.6)");
-            grad.addColorStop(1, "rgba(255, 100, 0, 0)");
-
-            ctx.beginPath();
-            ctx.moveTo(sx + ny * 2, sy - nx * 2);
-            ctx.lineTo(sx - ny * 2, sy + nx * 2);
-            ctx.lineTo(sx - nx * 18, sy - ny * 18);
-            ctx.closePath();
-            ctx.fillStyle = grad;
-            ctx.fill();
+            const trailSteps = 5;
+            for (let t = 1; t <= trailSteps; t++) {
+                const tx = Math.round(sx - nx * t * 5);
+                const ty = Math.round(sy - ny * t * 5);
+                const ts = Math.max(1, 4 - t);
+                const alpha = (1 - t / trailSteps) * 0.55;
+                ctx.fillStyle = t === 1
+                    ? `rgba(255,200,0,${alpha})`
+                    : `rgba(255,100,0,${alpha * 0.7})`;
+                ctx.fillRect(tx - Math.floor(ts / 2), ty - Math.floor(ts / 2), ts, ts);
+            }
         }
+
+        ctx.fillStyle = "rgba(255,160,0,0.25)";
+        ctx.fillRect(sx - 6, sy - 6, 12, 12);
+
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillRect(sx - 3, sy - 3, 6, 6);
+
+        ctx.fillStyle = "#ffe066";
+        ctx.fillRect(sx - 3, sy - 3, 6, 1); 
+        ctx.fillRect(sx - 3, sy - 3, 1, 6); 
+        ctx.fillStyle = "#cc8800";
+        ctx.fillRect(sx - 3, sy + 2, 6, 1);
+        ctx.fillRect(sx + 2, sy - 3, 1, 6);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(sx - 1, sy - 1, 2, 2);
     }
 }
 
 export function drawItems(items, camera) {
+    const now = performance.now() * 0.001;
     for (const item of items) {
         const sx = item.x - camera.x;
         const sy = item.y - camera.y;
+        const bob = Math.sin(now * 2.2 + item.x * 0.05) * 2.5;
+        const isy = sy + bob;
 
         if (item.type === "apple") {
-            ctx.fillStyle = "#e53935";
-            ctx.fillRect(sx - 7, sy - 7, 14, 14);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(sx - 7, sy - 7, 14, 14);
-            ctx.fillStyle = "#43a047";
-            ctx.fillRect(sx, sy - 10, 2, 4);
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillRect(sx - 6, isy + 9, 12, 3);
+
+            ctx.fillStyle = "#c0392b";
+            ctx.fillRect(sx - 5, isy - 5, 10, 10);
+            ctx.fillStyle = "#922b21";
+            ctx.fillRect(sx + 1, isy, 4, 4);
+            ctx.fillStyle = "#f1948a";
+            ctx.fillRect(sx - 3, isy - 3, 3, 2);
+            ctx.strokeStyle = "#7b241c";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx - 5, isy - 5, 10, 10);
+            ctx.fillStyle = "#6d4c41";
+            ctx.fillRect(sx, isy - 8, 2, 4);
+            ctx.fillStyle = "#27ae60";
+            ctx.fillRect(sx + 1, isy - 8, 4, 3);
+            ctx.fillStyle = "#1e8449";
+            ctx.fillRect(sx + 2, isy - 7, 2, 1);
 
         } else if (item.type === "draft") {
-            ctx.fillStyle = "white";
-            ctx.fillRect(sx - 8, sy - 12, 16, 22);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(sx - 8, sy - 12, 16, 22);
-            ctx.fillStyle = "black";
-            ctx.font = "8px monospace";
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillRect(sx - 7, isy + 13, 14, 3);
+
+            ctx.fillStyle = "#f5f5f5";
+            ctx.fillRect(sx - 8, isy - 11, 16, 22);
+            ctx.fillStyle = "#FFD700";
+            ctx.fillRect(sx - 8, isy - 11, 16, 5);
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx - 8, isy - 11, 16, 22);
+            ctx.fillStyle = "#222";
+            ctx.font = "bold 11px monospace";
             ctx.textAlign = "center";
-            ctx.fillText("?", sx, sy + 2);
+            ctx.fillText("?", sx, isy + 6);
+            ctx.fillStyle = "#FFD700";
+            ctx.fillRect(sx - 6, isy - 9, 2, 2);
+            ctx.fillRect(sx + 4, isy - 9, 2, 2);
 
         } else if (item.type === "powerup") {
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillRect(sx - 8, isy + 10, 16, 3);
+
+            const pulse = 0.7 + 0.3 * Math.sin(now * 3.5 + item.x);
             ctx.fillStyle = "#1565c0";
-            ctx.fillRect(sx - 9, sy - 9, 18, 18);
+            ctx.fillRect(sx - 8, isy - 8, 16, 16);
+            ctx.fillStyle = "#0d47a1";
+            ctx.fillRect(sx - 8, isy - 8, 3, 3); 
+            ctx.fillRect(sx + 5, isy - 8, 3, 3);  
+            ctx.fillRect(sx - 8, isy + 5, 3, 3);  
+            ctx.fillRect(sx + 5, isy + 5, 3, 3);  
             ctx.strokeStyle = "#FFD700";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(sx - 9, sy - 9, 18, 18);
-            ctx.fillStyle = "#FFD700";
-            ctx.font = "bold 12px monospace";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx - 8, isy - 8, 16, 16);
+            ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+            ctx.font = "bold 13px monospace";
             ctx.textAlign = "center";
-            ctx.fillText("★", sx, sy + 5);
+            ctx.fillText("★", sx, isy + 5);
+            ctx.fillStyle = `rgba(255,255,255,${pulse * 0.5})`;
+            ctx.fillRect(sx - 5, isy - 5, 3, 2);
         }
     }
 }
@@ -1040,18 +1292,29 @@ export function drawDraftScreen(state) {
     const startX = canvas.width / 2 - totalW / 2;
     const cardY = canvas.height / 2 - cardH / 2;
 
+    const now = performance.now() * 0.001;
+
     state.draft.cards.forEach((card, i) => {
         const x = startX + i * (cardW + spacing);
         const isActive = i === state.draft.activeIndex;
 
+        const phase = i * 0.9;
+        const floatY  = Math.sin(now * 1.4 + phase) * 5;
+        const floatRot = Math.sin(now * 1.1 + phase + 1.0) * 0.022;
         const lift = isActive ? -20 : 0;
+        const finalY = cardY + lift + 20 + floatY;
 
         if (isActive) {
             ctx.shadowColor = "#FFD700";
             ctx.shadowBlur = 20;
         }
 
-        drawDraftCard(x, cardY + lift + 20, cardW, cardH, card, isActive);
+        ctx.save();
+        ctx.translate(x + cardW / 2, finalY + cardH / 2);
+        ctx.rotate(floatRot);
+        ctx.translate(-(x + cardW / 2), -(finalY + cardH / 2));
+        drawDraftCard(x, finalY, cardW, cardH, card, isActive);
+        ctx.restore();
         ctx.shadowBlur = 0;
     });
 }
@@ -1118,84 +1381,77 @@ export function drawMines(mines, camera) {
     const now = performance.now() * 0.001;
 
     for (const mine of mines) {
-        const sx = mine.x - camera.x;
-        const sy = mine.y - camera.y;
+        const sx = Math.round(mine.x - camera.x);
+        const sy = Math.round(mine.y - camera.y);
 
         if (mine.triggered) {
             const flash = Math.sin(now * 80) > 0;
-            ctx.save();
-            ctx.shadowColor = "#ff2200";
-            ctx.shadowBlur = 30;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 10, 0, Math.PI * 2);
             ctx.fillStyle = flash ? "#ff4400" : "#ff0000";
-            ctx.fill();
-            ctx.restore();
+            ctx.fillRect(sx - 8, sy - 8, 16, 16);
+            ctx.fillStyle = flash ? "#ffaa00" : "#cc0000";
+            ctx.fillRect(sx - 5, sy - 5, 10, 10);
+            ctx.fillStyle = flash ? "#ffffff" : "#ff6600";
+            ctx.fillRect(sx - 2, sy - 2, 4, 4);
             continue;
         }
 
         if (!mine.armed) {
             const progress = 1 - (mine.armTimer / 0.4);
-            ctx.save();
             ctx.globalAlpha = progress * 0.85;
-        
-            ctx.beginPath();
-            ctx.arc(sx, sy, 6, 0, Math.PI * 2);
-            ctx.fillStyle = "#1a3d1a";
-            ctx.fill();
-            ctx.strokeStyle = "#2d6b2d";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
 
-            ctx.shadowColor = "#ffe000";
-            ctx.shadowBlur = 8 * progress;
-            ctx.beginPath();
-            ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 220, 0, ${progress * 0.9})`;
-            ctx.fill();
-        
-            ctx.restore();
+            ctx.fillStyle = "#1a3d1a";
+            ctx.fillRect(sx - 4, sy - 4, 8, 8);
+            ctx.strokeStyle = "#2d6b2d";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx - 4, sy - 4, 8, 8);
+
+            ctx.fillStyle = `rgba(255,220,0,${progress})`;
+            ctx.fillRect(sx - 1, sy - 1, 2, 2);
+
+            ctx.globalAlpha = 1;
             continue;
         }
 
-        const pulse = 0.6 + 0.4 * Math.sin(now * 3 + mine.pulsePhase);
+        const pulse = Math.sin(now * 3 + mine.pulsePhase) > 0;
         const size = mine.isMega ? 10 : 7;
+        const isGreen = !mine.isMega;
+        const bodyColor  = mine.isMega ? "#cc4400" : "#1a1a1a";
+        const glowColor  = mine.isMega ? "#ff8800" : "#00ff88";
+        const coreColor  = mine.isMega ? (pulse ? "#ffaa00" : "#ff6600") : (pulse ? "#00ff88" : "#007744");
 
-        ctx.beginPath();
-        ctx.arc(sx, sy, mine.aoeRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${mine.isMega ? "255,80,0" : "80,255,80"}, 0.07)`;
+        const r = mine.aoeRadius;
+        ctx.fillStyle = `rgba(${isGreen ? "80,255,80" : "255,80,0"}, 0.06)`;
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            const rx = Math.round(sx + Math.cos(a) * r);
+            const ry = Math.round(sy + Math.sin(a) * r);
+            ctx.fillRect(rx - 1, ry - 1, 2, 2);
+        }
+
+        ctx.fillStyle = bodyColor;
+        ctx.fillRect(sx - size, sy - size, size * 2, size * 2);
+
+        ctx.fillStyle = "rgba(255,255,255,0.15)";
+        ctx.fillRect(sx - size, sy - size, size * 2, 2);
+        ctx.fillRect(sx - size, sy - size, 2, size * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(sx - size, sy + size - 2, size * 2, 2);
+        ctx.fillRect(sx + size - 2, sy - size, 2, size * 2);
+
+        ctx.strokeStyle = glowColor;
         ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.strokeRect(sx - size, sy - size, size * 2, size * 2);
 
-        ctx.save();
-        ctx.shadowColor = mine.isMega ? "#ff6600" : "#00ff88";
-        ctx.shadowBlur = 15 * pulse;
+        const coreSize = mine.isMega ? 4 : 3;
+        ctx.fillStyle = coreColor;
+        ctx.fillRect(sx - Math.floor(coreSize / 2), sy - Math.floor(coreSize / 2), coreSize, coreSize);
 
-        ctx.beginPath();
-        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-        ctx.fillStyle = mine.isMega ? "#cc4400" : "#1a1a1a";
-        ctx.fill();
-        ctx.strokeStyle = mine.isMega ? "#ff8800" : "#00ff88";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(sx, sy, size * 0.35, 0, Math.PI * 2);
-        ctx.fillStyle = mine.isMega
-            ? `rgba(255,160,0,${pulse})`
-            : `rgba(0,255,120,${pulse})`;
-        ctx.fill();
-
-        ctx.restore();
-
-        ctx.save();
-        ctx.strokeStyle = `rgba(${mine.isMega ? "255,120,0" : "0,255,100"}, ${0.25 * pulse})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(sx - size * 1.8, sy); ctx.lineTo(sx + size * 1.8, sy);
-        ctx.moveTo(sx, sy - size * 1.8); ctx.lineTo(sx, sy + size * 1.8);
-        ctx.stroke();
-        ctx.restore();
+        ctx.fillStyle = `rgba(${isGreen ? "0,255,100" : "255,120,0"}, ${pulse ? 0.35 : 0.12})`;
+        const armLen = Math.round(size * 1.8);
+        ctx.fillRect(sx - armLen, sy, armLen - size, 1);  
+        ctx.fillRect(sx + size,   sy, armLen - size, 1);  
+        ctx.fillRect(sx, sy - armLen, 1, armLen - size);  
+        ctx.fillRect(sx, sy + size,   1, armLen - size); 
     }
 }
 
@@ -1283,39 +1539,6 @@ export function drawPlayerSelectScreen(selectedChoice, bestTimes = {}) {
             }
         }
         ctx.fillText(line.trim(), x + cardW / 2, lineY);
-
-        // const best = bestTimes[opt.key] || 0;
-        // const MAX_TIME = 600;
-        // const progress = Math.min(best / MAX_TIME, 1);
-
-        // const barX = x + 10;
-        // const barY = cardY + cardH - 28;
-        // const barW = cardW - 20;
-        // const barH = 6;
-
-        // ctx.fillStyle = "rgba(255,255,255,0.1)";
-        // ctx.fillRect(barX, barY, barW, barH);
-
-        // if (progress > 0) {
-        //     const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-        //     grad.addColorStop(0, isActive ? "#FFD700" : "#888");
-        //     grad.addColorStop(1, isActive ? "#ff8800" : "#555");
-        //     ctx.fillStyle = grad;
-        //     ctx.fillRect(barX, barY, barW * progress, barH);
-        // }
-
-        // ctx.strokeStyle = "rgba(255,255,255,0.15)";
-        // ctx.lineWidth = 1;
-        // ctx.strokeRect(barX, barY, barW, barH);
-
-        // ctx.font = "11px monospace";
-        // ctx.fillStyle = best > 0 ? (isActive ? "#FFD700" : "#888") : "#444";
-        // ctx.textAlign = "center";
-        // ctx.fillText(
-        //     best > 0 ? `Best: ${Math.floor(best / 60)}m ${Math.floor(best % 60)}s` : "No record",
-        //     x + cardW / 2,
-        //     barY + barH + 14
-        // );
     });
     
     ctx.font = "16px monospace";
