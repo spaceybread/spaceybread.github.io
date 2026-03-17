@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MNIST — Draw a Digit</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="loading-overlay visible" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">LOADING MODELS</div>
+  <div class="loading-sub">Fetching weights...</div>
+</div>
+
+<div class="content">
+
+
+  <div class="error-msg" id="errorMsg">
+    Could not load models.json — make sure it's in the same directory as this HTML file.
+  </div>
+
+  <div class="main-layout">
+    <div class="canvas-panel">
+      <div class="canvas-label">Your drawing</div>
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="drawCanvas" width="280" height="280"></canvas>
+      </div>
+      <div class="controls">
+        <button class="primary" id="predictBtn" disabled>Predict</button>
+        <button id="clearBtn">Clear</button>
+      </div>
+
+      <div class="prediction-badge" id="predBadge">
+        <div class="pred-number" id="predNumber">—</div>
+        <div>
+          <div class="pred-text">Prediction</div>
+          <div class="pred-conf" id="predConf"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-panel" id="resultsPanel">
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
