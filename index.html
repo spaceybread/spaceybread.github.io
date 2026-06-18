@@ -21,14 +21,12 @@
 
   <main>
     <p>
-      I am an undergraduate student majoring in Mathematics and Computer Science at the <a href="https://www.wisc.edu/">University of Wisconsin–Madison</a>.
-      I am interested in algorithms and complexity. To that end, I do research under the supervision of <a href="https://pages.cs.wisc.edu/~bach/">Prof. Eric Bach</a> and <a href="https://pages.cs.wisc.edu/~chatterjee/">Prof. Rahul Chatterjee</a>.
-      I also work as a student programmer at the <a href="https://www.ssec.wisc.edu/">Space Science and Engineering Center</a>. In the past, I've worked as a quantitative analyst intern at <a href="https://www.gravitontrading.com/">Graviton Research Capital</a>.
+      Starting Fall 2026, I'll be a PhD student at the Department of Computer Science at <a href="https://www.cs.purdue.edu/">Purdue University</a>. Before that, I completed my undergraduate studies in Mathematics and Computer Science at the <a href="https://www.wisc.edu/">University of Wisconsin–Madison</a>.
+      I am interested in algorithms, crytography, and complexity. To that end, I worked on research projects under the supervision of <a href="https://pages.cs.wisc.edu/~bach/">Prof. Eric Bach</a> and <a href="https://pages.cs.wisc.edu/~chatterjee/">Prof. Rahul Chatterjee</a> as an undergrad.
+      
     </p>
     
-    <p>
-      I'll be applying to CS PhD programs this fall! 
-    </p>
+
     <div class="links">
       <a href="mailto:ansh@cs.wisc.edu" style="font-size: 14px;">Email</a>
       <a href="https://github.com/spaceybread" style="font-size: 14px;">Github</a>
@@ -85,6 +83,114 @@
 
     output.textContent = renderTape();
     setTimeout(step, 1200);
+    </script>
+
+    <div id="prime-container">
+      <div id="prime-header"></div>
+      <pre id="prime-output"></pre>
+    </div>
+
+    <script>
+    (function () {
+      const BITS = 128;
+      const header = document.getElementById('prime-header');
+      const out = document.getElementById('prime-output');
+
+      function powmod(base, exp, mod) {
+        let result = 1n;
+        base %= mod;
+        while (exp > 0n) {
+          if (exp & 1n) result = (result * base) % mod;
+          exp >>= 1n;
+          base = (base * base) % mod;
+        }
+        return result;
+      }
+
+      function isProbablePrime(n, rounds) {
+        if (n < 2n) return false;
+        for (const p of [2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n]) {
+          if (n === p) return true;
+          if (n % p === 0n) return false;
+        }
+        let d = n - 1n, r = 0n;
+        while ((d & 1n) === 0n) { d >>= 1n; r++; }
+
+        for (let i = 0; i < rounds; i++) {
+          const a = 2n + randomBig(n - 4n);
+          let x = powmod(a, d, n);
+          if (x === 1n || x === n - 1n) continue;
+          let composite = true;
+          for (let j = 0n; j < r - 1n; j++) {
+            x = (x * x) % n;
+            if (x === n - 1n) { composite = false; break; }
+          }
+          if (composite) return false;
+        }
+        return true;
+      }
+
+      function randomBig(max) {
+        const bytes = Math.ceil((max.toString(2).length) / 8) + 1;
+        const arr = new Uint8Array(bytes);
+        crypto.getRandomValues(arr);
+        let v = 0n;
+        for (const b of arr) v = (v << 8n) | BigInt(b);
+        return v % (max + 1n);
+      }
+
+      function randomOdd(bits) {
+        const arr = new Uint8Array(bits / 8);
+        crypto.getRandomValues(arr);
+        let v = 0n;
+        for (const b of arr) v = (v << 8n) | BigInt(b);
+        v |= 1n;
+        v |= 1n << BigInt(bits - 1);
+        return v;
+      }
+
+      let candidate = randomOdd(BITS);
+      let tested = 0;
+
+      function search() {
+        tested++;
+        if (isProbablePrime(candidate, 20)) {
+          reveal(candidate);
+          return;
+        }
+        header.textContent = `searching for a ${BITS}-bit prime  |  candidates tested: ${tested}`;
+        candidate += 2n;
+        setTimeout(search, 0);
+      }
+
+      function reveal(p) {
+        const digits = p.toString();
+        header.textContent =
+          `probable prime  |  ${BITS} bits  |  ${digits.length} digits  |  ${tested} candidate(s) tested`;
+
+        const cols = digits.length;
+        const cells = digits.split('');
+        out.textContent = '';
+        let i = 0;
+        function drip() {
+          const shown = cells.slice(0, i).join('');
+          let grid = '';
+          for (let k = 0; k < shown.length; k += cols) {
+            grid += shown.slice(k, k + cols) + '\n';
+          }
+          out.textContent = grid + (i < cells.length ? '█' : '');
+          if (i < cells.length) {
+            i += 3;
+            if (i > cells.length) i = cells.length;
+            setTimeout(drip, 16);
+          }
+        }
+        drip();
+      }
+
+      header.textContent = `searching for a ${BITS}-bit prime ...`;
+      setTimeout(search, 400);
+    })();
     </script>
   </main>
 </body>
