@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing - Ansh Aggarwal</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .older-note {
+      color: #999;
+      font-size: 0.9rem;
+      font-style: italic;
+      border-left: 2px solid #444;
+      padding-left: 0.75rem;
+      margin: 2rem 0 1rem;
+    }
+
+    .articles {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .articles li {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+    }
+
+    /* dotted leader between title and date */
+    .articles li::after {
+      content: "";
+      order: 1;
+      flex: 1;
+      min-width: 1.5rem;
+      border-bottom: 1px dotted #555;
+    }
+
+    .articles a {
+      color: #e0e0e0;
+    }
+
+    .articles a:hover {
+      color: #32CD32;
+      text-decoration: none;
+    }
+
+    .articles time {
+      order: 2;
+      flex-shrink: 0;
+      color: #999;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><a href="../index.html">Ansh Aggarwal</a></h1>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../mcidasv.html">McIDAS-V</a>
+      <a href="index.html" class="active">Writing</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Writing</h2>
+
+    <ul class="articles">
+      <li>
+        <a href="pir-lecture-1.html">Notes on Private Information Retrieval, Part 1</a>
+        <time datetime="2026-11-21">Nov 21, 2026</time>
+      </li>
+    </ul>
+
+    <p class="older-note">
+      Looking for some of my older writing? Perhaps you'll like <a href="https://kleinbottlebar.wordpress.com/">kleinbottlebar</a>.
+    </p>
+  </main>
+</body>
+</html>

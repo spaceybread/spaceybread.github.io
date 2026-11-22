@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Information Retrieval</title>
+  <link rel="stylesheet" href="../style.css">
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+      :root {
+        --py-bg: #f7f7f9;
+        --py-border: #d8d8de;
+        --py-text: #1f2328;
+        --py-muted: #6a6f78;
+        --py-accent: #2457c5;
+        --py-keyword: #8a2be2;
+        --py-def: #2457c5;
+        --py-string: #a3401a;
+        --py-number: #0a7d4f;
+        --py-comment: #7a7f87;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --py-bg: #1c1f24;
+          --py-border: #3a3f47;
+          --py-text: #e6e8eb;
+          --py-muted: #9aa1ab;
+          --py-accent: #7aa7ff;
+          --py-keyword: #c792ea;
+          --py-def: #82aaff;
+          --py-string: #f0a77b;
+          --py-number: #7fd6a4;
+          --py-comment: #8a919c;
+        }
+        body { background: #121417; color: var(--py-text); }
+      }
+
+      html { scroll-behavior: smooth; }         
+      p:target { background: rgba(255, 220, 0, 0.05); }
+    
+      .py-runner { border: 1px solid var(--py-border); border-radius: 6px; overflow: hidden; margin: 1.5em 0; }
+      .py-runner .CodeMirror {
+        height: auto; background: var(--py-bg); color: var(--py-text);
+        font-size: 12px; line-height: 1.5;
+      }
+      .py-runner .CodeMirror-gutters { background: var(--py-bg); border-right: 1px solid var(--py-border); }
+      .py-runner .CodeMirror-linenumber { color: var(--py-muted); }
+      .py-runner .CodeMirror-cursor { border-left-color: var(--py-text); }
+      .py-runner .cm-keyword  { color: var(--py-keyword); }
+      .py-runner .cm-def      { color: var(--py-def); }
+      .py-runner .cm-builtin  { color: var(--py-def); }
+      .py-runner .cm-string   { color: var(--py-string); }
+      .py-runner .cm-number   { color: var(--py-number); }
+      .py-runner .cm-comment  { color: var(--py-comment); font-style: italic; }
+      .py-runner .cm-variable, .py-runner .cm-variable-2, .py-runner .cm-property { color: var(--py-text); }
+    
+      .py-runner .py-bar {
+        display: flex; align-items: center; gap: 0.75em;
+        padding: 0.5em 0.75em; border-top: 1px solid var(--py-border); background: var(--py-bg);
+      }
+      .py-runner .py-run {
+        font: inherit; font-size: 0.9em; padding: 0.35em 1em; cursor: pointer;
+        border: 1px solid var(--py-accent); border-radius: 4px;
+        background: var(--py-accent); color: #fff;
+      }
+      .py-runner .py-run:disabled { opacity: 0.6; cursor: wait; }
+      .py-runner .py-run:focus-visible { outline: 2px solid var(--py-accent); outline-offset: 2px; }
+      .py-runner .py-status { color: var(--py-muted); font-size: 0.85em; }
+      .py-runner .py-output {
+        margin: 0; padding: 0.75em; min-height: 1.5em; white-space: pre-wrap;
+        border-top: 1px solid var(--py-border); background: var(--py-bg); color: var(--py-text);
+        font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
+      }
+      .py-runner .py-output:empty { display: none; }
+
+
+      .sp-fig { max-width: 620px; margin: 2em auto; --sp-1: var(--py-accent, #2457c5); --sp-2: var(--py-string, #a3401a); }
+.sp-runs { display: grid; grid-template-columns: auto 1fr auto; align-items: center; row-gap: 0.5em; }
+.sp-title { grid-column: 1 / -1; margin-top: 0.9em; }
+.sp-title:first-child { margin-top: 0; }
+.sp-box { border: 1.5px solid currentColor; border-radius: 8px; padding: 0.5em 1em; text-align: center; background: color-mix(in srgb, currentColor 10%, transparent); }
+.sp-run1 { color: var(--sp-1); }
+.sp-run2 { color: var(--sp-2); }
+.sp-link { position: relative; margin: 0 0.9em; padding-bottom: 0.2em; text-align: center; border-bottom: 1.5px solid currentColor; }
+.sp-link::before, .sp-link::after { content: ""; position: absolute; bottom: -5.75px; border: 5px solid transparent; }
+.sp-link::before { left: -6px; border-left-width: 0; border-right: 8px solid currentColor; }
+.sp-link::after { right: -6px; border-right-width: 0; border-left: 8px solid currentColor; }
+.sp-fig figcaption { margin-top: 1em; text-align: center; font-size: 0.9em; }
+
+    </style>
+
+
+</head>
+<body>
+  <header>
+    <h1><a href="../index.html">Ansh Aggarwal</a></h1>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../research.html">Research</a>
+      <a href="../mcidasv.html">McIDAS-V</a>
+      <a href="index.html" class="active">Writing</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Notes on Private Information Retrieval, Part 1</h2>
+
+
+
+    <div class="parastart">
+      <p>Communication Complexity</p>
+    </div>
+      <p class="paralol"> 
+        Suppose Alice and Bob have their $n$-bit inputs $a, b \in \{0, 1\}^n$ respectively. They have a function, $$f:\{0, 1\}^n \times \{0, 1\}^n \to \{0, 1\}$$ that they want to compute with their inputs. What is the fewest bits they need to exchange to compute $f(a, b)$? This is the crux of communication complexity. More formally, the communication complexity of $f$, denoted $\textsf{CC}(f)$, is the least number of bits you need to compute $f$. 
+      </p>  
+
+      <p class="paralol">
+        The canonical example is the equality function, $$ \textsf{EQ}(x, y) = \begin{cases} 1 & x = y \\ 0 & x \neq y \end{cases}~.$$ It's easy to observe that you get a trivial upper bound for $\textsf{CC} (\textsf{EQ})$ as $n + 1$ because Bob could send all his bits to Alice for her to compute it locally and return the output $0$ or $1$ back to Bob. Interestingly, you can show that this is the best you can do in the deterministic setting [<a href="#RY20">RY20</a>]. 
+      </p>
+
+      <p class="paralol">
+        These lecture notes are not about communication complexity but this notion is useful to keep in mind when thinking about the true subject of these notes, Private Information Retrieval. If you're interested in looking at more communication complexity literature, consider checking out [<a href="#RY20">RY20</a>, <a href="#KN06">KN06</a>]. 
+      </p>
+
+    <br>
+    <div class="parastart">
+        <p>Private Information Retrieval (PIR)</p>
+    </div>
+    <p class="paralol">
+        Suppose there exists some database $D$ on some server $S$ and Alice wants to obtain the $i$th entry of $D$, denoted $D[i]$, but doesn't want $S$ to learn what $i$ is. Can such a PIR system be achieved?
+    </p>
+
+    <p class="paralol">
+        There is a trivial answer, that is, $S$ can send the entire database $D$ to Alice so that she can locally query it to find the entry she desires. Can you do better? A non-trivial PIR protocol is exactly one where you don't have to send the entire database. 
+    </p>
+
+    <p class="paralol">
+        More formally, we'll define the database $D$ to be an $n$-bit string and Alice's query $i \in [n]$ asks what the $i$th bit of $D$ is. We measure the cost of a scheme by its <em>communication</em>, that is, the total number of bits exchanged between Alice and the server (or servers, as we'll see), in both directions, in the worst case. The trivial scheme has communication $n$, since the server just sends all of $D$. We call a scheme non-trivial if it has communication less than $n$ in the worst case. As is perhaps obvious, this is a communication complexity problem. This is the formalization used in [<a href="#CGKS98">CGKS98</a>].
+    </p>
+
+    <p class="theorem"> <strong>Definition.</strong>
+        A <em>$k$-server PIR protocol</em> is a protocol, with any number of rounds, between
+        Alice, who holds an index $i \in [n]$ and private randomness $r_A$, and $k \geq 1$
+        non-communicating servers $S_1, \ldots, S_k$, each holding the database
+        $D \in \{0,1\}^n$ and its own private randomness. Every message a party sends is a
+        function of its input, its randomness, and the messages it has seen so far. We write
+        $T_l$ for the transcript between Alice and $S_l$. At the end, Alice outputs a bit.
+    </p>
+    
+    <p class="paralol">
+        We care about two properties, <em>correctness</em> and <em>privacy</em>. 
+    </p>
+
+    <p class="theorem"> <strong>Definition (Correctness).</strong>
+        For every database $D$, every index $i$, and every choice of randomness, Alice outputs $D[i]$.
+    </p>
+
+    <p class="theorem"> <strong>Definition (Privacy).</strong>
+        For every database $D$ and every server $S_l$, the distribution of the transcript $T_l$
+        (over the choice of randomness) is the same for every index $i$.
+    </p>
+
+    <p class="paralol">
+        We can study PIR in many different settings with different limits on Alice's abilities and similarly, the amount of computation power the server has. As alluded to in the definition, we also study models where $k$ servers (for $k > 1$) have copies of the database $D$. 
+    </p>
+    
+    <br>
+    
+    <div class="parastart">
+        <p>Deterministic PIR? </p>
+    </div>
+
+    <p class="paralol">
+        Is it possible to achieve a non-trivial PIR scheme that is entirely deterministic? Apparently not! In [<a href="#Gas04">Gas04</a>], this is stated as a <i>folklore</i> result. For the uninitiated, a folklore result is one that is generally simple and lacks a clear originator or formal proof in literature. We'll write a simple proof for this here. 
+    </p>
+    <p class="theorem"> <strong>Theorem.</strong>
+        In any <u>deterministic</u> PIR protocol (Alice and the servers cannot flip coins) with $k \geq 1$ non-communicating servers, each holding the entire database
+        $D \in \{0,1\}^n$, some execution exchanges at least $n$ bits.
+    </p>
+    <div class="proof">    
+    <p > <em>Proof.</em>
+        As we set the protocol to be deterministic, the transcript of the conversation, $T_l(D)$ between Alice and each server $S_l$ for $l \in [k]$ must be the same for every index $i$. 
+    </p>
+    <p>    
+        Why? The transcript has to be a fixed function on $(i, D)$ and the server already knows $D$. If two different indices, $i$ and $j$ produced different transcripts on the same $D$, then it leaks information. Moreover, the server could simply try every index to see which index matched the transcript. We obviously don't want this. 
+    </p>
+    <p>
+        As such, Alice's output is $\mathrm{out}(i, \tau(D))$ where $\tau(D) = (T_1(D), \ldots, T_k(D))$. If for $D$, there exists some database $D' \in \{0, 1\}^n$ such that $\tau(D) = \tau(D')$, then, by correctness, $D[j] = \mathrm{out}(j, \tau(D)) = \mathrm{out}(j, \tau(D')) = D'[j]$ for every $j$, so $D = D'$. 
+    </p>
+    <p>
+        Now, we know $D \in \{0, 1\}^n$, which implies that there are $2^n$ different databases. By the argument above, no two databases share a transcript thus there are $2^n$ distinct transcripts. 
+    </p>
+    <p>
+        Observe that only $2^n - 1$ binary strings have length less than $n$ (since $2^0 + 2^1 + \cdots + 2^{n-1} = 2^n - 1$). As such $2^n$ transcripts cannot all be shorter than $n$ bits, at least one of them has length at least $n$. That is, there exists some database $D$ that forces Alice and the servers to exchange at least $n$ bits.
+    </p>
+    </div>
+    <p class="paralol">
+        The consequence of this is that we must allow Alice to flip coins if we hope to construct any non-trivial PIR scheme. This ability will be called private randomness and denoted with $r_A$. We also equip each server with private randomness. Keen readers may have noticed that it was already a part of the PIR definition earlier. 
+    </p>
+
+    <br>
+    
+
+    <div class="parastart">
+        <p>Single-Server Information-Theoretic PIR</p>
+    </div>
+
+    <p class="paralol">
+        In [<a href="#CGKS98">CGKS98</a>], the authors show that if $D$ is stored on a single, computationally unbounded server $S$, then the best PIR scheme must be the trivial scheme. We will prove this here. 
+    </p>
+
+    <p class="theorem"> <strong>Theorem.</strong>
+        Every single-server PIR protocol has at least $2^n$ possible transcripts, so some
+        execution exchanges at least $n$ bits.
+    </p>
+    
+    <div class="proof">
+        <p> <em>Proof.</em>
+            For Alice's index $i$ and private randomness $r_A$, and the server's database $D$ and randomness $r_S$, we denote the corresponding
+            transcript by $T(i, D, r_A, r_S)$.
+        </p>
+        <p>
+            We call a transcript $\mathsf{T}$ <em>possible</em> for $(D, i)$ if $$\Pr_{r_A,\, r_S}\big[\,T(i, D, r_A, r_S) = \mathsf{T}\,\big] > 0.$$
+    
+            We show that no $\mathsf{T}$ is possible for two distinct databases $D$ and $D'$.
+        </p>
+        <p>
+            Suppose $\mathsf{T}$ is possible for $(D, i)$ and $(D', i')$ where $D \neq D'$. This implies there is some $j$ such that $D[j] \neq D'[j]$. Let's pick this index.
+    
+            By privacy, $\mathsf{T}$ should also be possible for $(D, j)$ and $(D', j)$, so there must be some private randomness $r_A, r_S, r_A', r_S'$ such that $$T(j, D, r_A, r_S) = \mathsf{T} = T(j, D', r_A', r_S').$$
+        </p>
+        <p>
+            Now, we know that each party's messages depend entirely on their own inputs and randomness with whatever messages were exchanged before in the transcript.
+    
+            By inducting on the messages, Alice with $(j, r_A)$ and the server with $(D', r_S')$ also produce $\mathsf{T}$. Alice's output is a function of $(j, r_A, \mathsf{T})$, so she
+            outputs the same bit against $(D, r_S)$ as she would against $(D', r_S')$. By correctness this bit equals both $D[j]$ and $D'[j]$, which is a contradiction.
+        </p>
+
+
+        <figure class="sp-fig">
+            <div class="sp-runs">
+                <div class="sp-title"><strong>Run 1.</strong> Alice outputs $D[j]$.</div>
+                <div class="sp-box sp-run1">Alice $(j, r_A)$</div>
+                <div class="sp-link">transcript $\mathsf{T}$</div>
+                <div class="sp-box sp-run1">Server $(D, r_S)$</div>
+        
+                <div class="sp-title"><strong>Run 2.</strong> Alice outputs $D'[j]$.</div>
+                <div class="sp-box sp-run2">Alice $(j, r_A')$</div>
+                <div class="sp-link">transcript $\mathsf{T}$</div>
+                <div class="sp-box sp-run2">Server $(D', r_S')$</div>
+        
+                <div class="sp-title"><strong>Spliced run.</strong> Alice from run 1 talks to the server from run 2.</div>
+                <div class="sp-box sp-run1">Alice $(j, r_A)$</div>
+                <div class="sp-link">still $\mathsf{T}$</div>
+                <div class="sp-box sp-run2">Server $(D', r_S')$</div>
+            </div>
+            <figcaption>
+                Neither party can notice the swap because they each see only their own input and randomness,
+                along with the shared $\mathsf{T}$. In the spliced run Alice sees what she saw in run 1, so she
+                outputs $D[j]$, but the database is now $D'$, so correctness demands $D'[j]$ which forces the contradiction.
+            </figcaption>
+        </figure>
+
+        <p>
+            Hence the $2^n$ databases have pairwise disjoint, nonempty sets of possible transcripts, giving at least $2^n$ transcripts. Only $2^n - 1$ binary strings have length less than
+            $n$, so some transcript has at least $n$ bits. 
+        </p>
+        </div>
+
+    <p class="paralol">
+        The previous two negative results tell us that if we want to construct a non-trivial information-theoretic PIR scheme, first, we need to allow Alice and the servers to flip coins but also that, indeed, we need servers, plural, because a single server allows you only the trivial scheme. 
+    </p>
+    <br>
+    
+    <div class="parastart">Two-Server Information-Theoretic PIR</div>
+
+    <p class="paralol">
+        Now, we present the first positive result in this document. With two servers (that do not communicate with each other) and randomness, we can construct a scheme where the servers reply with $1$ bit each. This was also proposed in [<a href="#CGKS98">CGKS98</a>, Section 3.1].
+    </p>
+
+    <div class="theorem"> <strong>Scheme.</strong>
+        
+        <p>
+            Alice defines $e_i$, an $n$-bit string such that $e_i[j] = 1$ for $i = j$ and $0$ otherwise. 
+            She also samples $v$ randomly from the set of $n$-bit strings by flipping coins. 
+            Using these, she prepares two queries, $q_1 = v$ and $q_2 = v \oplus e_i$, that she sends to servers $S_1$ and $S_2$ respectively.  
+        </p>
+
+        <p> 
+            Server $S_l$ takes $q_l$ and computes the following bit, $$a_l = \bigoplus_{j \,:\, q_l[j] = 1} D[j].$$ 
+            In plain terms, it for every index of $q_l$ that is non-zero, we look at that index of $D$ and accumulate it using the XOR operation into $a_l$.
+            Both servers then return their respective $a_l$. 
+        </p>
+
+        <p>
+            Once Alice receives $a_1$ and $a_2$, she computes and outputs $a_1 \oplus a_2$. 
+        </p>
+    </div>
+    
+    <p class="paralol"> We now show that this scheme is indeed a PIR scheme by showing it is correct and private. </p>
+
+    <p class="theorem"> <strong>Theorem.</strong>
+        The scheme above is a $2$-server PIR protocol in which Alice sends $n$ bits to each server and each server replies with a single bit.
+    </p>
+
+    <div class="proof">
+    <p> <em>Proof.</em>
+        For correctness, notice that $q_1$ and $q_2$ are the same in every position except $i$.
+        
+        Therefore, for every $D[j]$ where $j \neq i$, either the bit is selected by both $S_1$ and $S_2$ or by neither of them.
+        
+        The bits that were not selected obviously do not impact the result and those that were, all indices $\neq i$ get cancelled out during the $a_1 \oplus a_2$ operation. 
+
+        For $D[i]$, only one of $S_1$ or $S_2$ actually selected it, as such, $D[i] = a_1 \oplus a_2$. 
+    </p>
+    <p>
+        For privacy, we argue that because $v$ was picked through uniformly random process (flipping coins), both $q_1$ and $q_2$ also appear uniformly random. Unless they collude, they cannot know which bit Alice flipped. 
+    </p>
+
+    <p>
+        As the scheme is correct and private, we conclude that it is indeed a PIR. 
+    </p>
+    </div>
+
+    <p class="paralol">
+        How good is this scheme? If you notice, Alice receives only two bits, which is a massive improvement over receiving all of $D$. However, in this case, she has to send significantly more bits to the servers. In total, $2n + 2$ bits are exchanged. 
+        The next goal is to make the queries shorter because this is still no better (actually, worse) than sending an entire database worth of data. 
+    </p>
+
+
+    <br>
+
+    <div class="parastart">
+        <p>A Non-Trivial Two-Server Scheme</p>
+    </div>
+
+    <p class="paralol">
+        Can we make the queries shorter? If we insist that each server replies with a single XOR bit, then no. According to [<a href="#CGKS98">CGKS98</a>, Section 5.2], such a scheme needs queries of at least $n - 1$ bits. There's a bit of a balancing act here, where we can't let one of the two sides of this exchange do too much work. We need to share the work between Alice and the servers more equally. 
+    </p>
+
+    <p class="paralol">
+        Here, we assume that $n$ is a perfect square and let $m = \sqrt{n}$ (if it's not a perfect square, pad $0$s at the end of $D$ such that its length ends up being a perfect square). 
+        
+        We now arrange the database $D$ as an $m \times m$ grid instead of a flat $n$-bit string. We can access row $x$ and column $y$ with $D[x, y]$. 
+        
+        There's a simple mapping from the $0$-indexed $i$ to $(x, y)$, $$ \textsf{map}(i) = (\lfloor i / m \rfloor, i \bmod m ) $$ though this explicit mapping isn't needed. All we need is that such a mapping exists. 
+    </p>
+
+    <div class="theorem"> <strong>Scheme.</strong>
+
+        <p>
+            Let $\textsf{map}(i) = (r, c)$. 
+            Alice defines $e_c$, an $m$-bit string such that $e_c[j] = 1$ for $j = c$ and $0$ otherwise.
+            She also samples $v$ uniformly at random from the set of $m$-bit strings by flipping coins.
+            Using these, she prepares two queries, $q_1 = v$ and $q_2 = v \oplus e_c$, that she sends to servers $S_1$ and $S_2$ respectively.
+        </p>
+
+        <p>
+            Server $S_l$ takes $q_l$ and computes an $m$-bit string $a_l$, with one bit for each row $t$ of the grid, $$a_l[t] = \bigoplus_{j \,:\, q_l[j] = 1} D[t, j].$$
+            In plain terms, $q_l$ selects some of the columns, and for every row the server XORs together the bits of that row that lie in the selected columns.
+            Both servers then return their respective $a_l$.
+        </p>
+
+        <p>
+            Once Alice receives $a_1$ and $a_2$, she computes and outputs $a_1[r] \oplus a_2[r]$.
+        </p>
+    </div>
+
+    <p class="paralol">
+        Notice that Alice only tells the servers about the column $c$ where we use the same trick as the previous scheme. She never mentions the row $r$ at all! The servers answer for every row and Alice can simply look at the row she cares about.
+    </p>
+
+    <p class="theorem"> <strong>Theorem.</strong>
+        The scheme above is a $2$-server PIR protocol with communication $4\sqrt{n}$.
+    </p>
+
+    <div class="proof">
+    <p> <em>Proof.</em>
+        The proofs for correctness and privacy are almost identical to those of the previous scheme, we omit them here for brevity. 
+    </p>
+    <p>
+        For the communication, each query is $m = \sqrt{n}$ bits and each answer is $m$ bits. With two servers, that is $4 \cdot m = 4 \cdot \sqrt{n}$ bits in total. 
+    </p>
+    </div>
+
+    <p class="paralol">
+        The key result here is that the communication achieved is $4 \cdot \sqrt{n}$. This is a non-trivial scheme when $n > 4 \cdot \sqrt{n}$, that is, when $n > 16$. 
+    </p>
+
+    <center>
+        <img id ="great-success" src="../media/writing-imgs/great-success.gif" style="width: 400px; height: auto;">
+    </center>
+
+    <br>
+    <p class="parastart">What's Next?</p>
+
+    <p class="paralol">
+        In [<a href="#CGKS98">CGKS98</a>], the authors achieve a scheme with $O(n^{1/3})$ communication complexity which is arguably the main result of the paper referenced so often here. 
+        
+        Additionally, so far we've only considered information-theoretic PIR schemes, that is, the server is capable of running any computation they want without having to worry about the time it takes to run them. 
+        
+        If we weaken them so that they're computationally limited, it is actually possible to achieve a single-server PIR scheme [<a href="#KO97">KO97</a>]. We'll discuss these (and more) in the next set of lecture notes.
+    </p>
+ 
+    <div class="parastart">
+      <p>References</p>
+        <p class="paralol" id="RY20">[RY20] Rao, Anup; Yehudayoff, Amir (2020). Communication complexity and applications. Cambridge: Cambridge University Press. ISBN 978-1-108-67164-4.</p>  
+        <p class="paralol" id="KN06">[KN06] Kushilevitz, Eyal; Nisan, Noam (2006). Communication complexity. Cambridge: Cambridge University Press. ISBN 978-0-521-02983-4. OCLC 70764786.</p>  
+        <p class="paralol" id="CGKS98">[CGKS98] B. Chor, O. Goldreich, E. Kushilevitz, and M. Sudan, Private information retrieval, Journal of the ACM, 45(6):965–981, 1998.</p>
+        <p class="paralol" id="Gas04">[Gas04] W. Gasarch, A survey on private information retrieval, Bulletin of the EATCS, 82:72–107, 2004. <a href="https://www.uni-ulm.de/fileadmin/website_uni_ulm/iui.inst.190/Mitarbeiter/toran/beatcs/column82.pdf">PDF</a></p>
+        <p class="paralol" id="KO97">[KO97] E. Kushilevitz and R. Ostrovsky, Replication is not needed: single database, computationally-private information retrieval, Proceedings of the 38th Annual IEEE Symposium on Foundations of Computer Science (FOCS), pp. 364–373, 1997.</p>
+        </p>
+      </div>
+
+
+  </main>
+</body>
+</html>
+
