@@ -51,6 +51,114 @@
       padding: 0.3rem 0.4rem;
     }
 
+    table.elo th.sortable {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    table.elo th.sortable:hover {
+      color: #e0e0e0;
+    }
+
+    table.elo th.sorted {
+      color: #32CD32;
+    }
+
+    /* sort indicator: a small square, which becomes a triangle on the sorted column */
+    table.elo th .ind {
+      display: inline-block;
+      width: 0.4rem;
+      height: 0.4rem;
+      margin-left: 0.35rem;
+      vertical-align: 0.1rem;
+      background: #555;
+    }
+
+    table.elo th.sortable:hover .ind {
+      background: #999;
+    }
+
+    table.elo th.sorted .ind,
+    table.elo th.sorted:hover .ind {
+      width: 0;
+      height: 0;
+      background: none;
+      border-left: 0.2rem solid transparent;
+      border-right: 0.2rem solid transparent;
+      border-top: 0.4rem solid #32CD32;
+    }
+
+    table.elo th.sorted.asc .ind {
+      border-top: 0;
+      border-bottom: 0.4rem solid #32CD32;
+    }
+
+    table.elo th.sortable:focus-visible {
+      outline: 1px solid #32CD32;
+    }
+
+    /* instant explanation on hover / keyboard focus */
+    table.elo th[data-tip]:hover::after,
+    table.elo th[data-tip]:focus-visible::after,
+    table.elo td [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 5;
+      width: 15rem;
+      white-space: normal;
+      text-align: left;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #e0e0e0;
+      background: #111;
+      border: 1px solid #333;
+      padding: 0.3rem 0.5rem;
+    }
+
+    table.elo th.tip-left::after,
+    table.elo td [data-tip]::after {
+      right: auto !important;
+      left: 0;
+    }
+
+    /* clinch letter beside the team name, explained in the key under the table */
+    .clinch {
+      position: relative;
+      font-size: 0.7rem;
+      margin-left: 0.3rem;
+      color: #999;
+    }
+
+    table.elo td.move {
+      font-size: 0.75rem;
+      width: 2rem;
+    }
+
+    .clinch-key {
+      font-size: 0.75rem;
+      color: #999;
+      margin: 0.6rem 0 0;
+    }
+
+    .clinch-key > span {
+      margin-right: 1.25rem;
+      white-space: nowrap;
+    }
+
+    .clinch-key .clinch {
+      margin-left: 0;
+      margin-right: 0.3rem;
+      color: #e0e0e0;
+    }
+
+    /* columns that drop out on narrow screens */
+    @media (max-width: 640px) {
+      table.elo .opt { display: none; }
+    }
+
     table.elo td {
       padding: 0.25rem 0.4rem;
       border-bottom: 1px dotted #333;
@@ -134,6 +242,58 @@
       stroke-width: 2;
     }
 
+    /* comparing two teams: a validated green/blue pair, with a legend and labelled ends */
+    .chart .line.a { stroke: #29a829; }
+    .chart .line.b { stroke: #4a8fd6; }
+    .chart .dot.a { fill: #29a829; }
+    .chart .dot.b { fill: #4a8fd6; }
+
+    .panel-meta {
+      color: #999;
+      font-size: 0.8rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .panel-meta select {
+      font: inherit;
+      color: #e0e0e0;
+      background: #111;
+      border: 1px solid #333;
+      padding: 0 0.2rem;
+      margin-left: 0.3rem;
+    }
+
+    .legend {
+      font-size: 0.8rem;
+      color: #ccc;
+      margin-bottom: 0.3rem;
+    }
+
+    .legend .key {
+      margin-right: 1rem;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 1rem;
+      height: 2px;
+      margin-right: 0.4rem;
+      vertical-align: 0.25rem;
+    }
+
+    .legend i.a { background: #29a829; }
+    .legend i.b { background: #4a8fd6; }
+
+    .h2h {
+      margin: 0.4rem 0 0;
+    }
+
+    .gotw {
+      margin: 0 0 0.6rem;
+      font-size: 0.85rem;
+      color: #e0e0e0;
+    }
+
     .chart .hit {
       fill: transparent;
       cursor: crosshair;
@@ -158,34 +318,6 @@
       color: #e0e0e0;
       white-space: nowrap;
     }
-
-    .bar-cell {
-      width: 30%;
-    }
-
-    .bar {
-      position: relative;
-      height: 0.5rem;
-    }
-
-    .bar::before {
-      /* the 1600 baseline */
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: -0.2rem;
-      bottom: -0.2rem;
-      border-left: 1px solid #555;
-    }
-
-    .bar span {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-    }
-
-    .bar .up { background: #32CD32; }
-    .bar .down { background: #777; }
 
     .up-txt { color: #32CD32; }
     .down-txt { color: #c0504d; }
@@ -274,6 +406,21 @@
       margin-bottom: 2.5rem;
     }
 
+    button.more {
+      font: inherit;
+      font-size: 0.85rem;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-top: 0.6rem;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    button.more:hover {
+      color: #32CD32;
+    }
+
     .note {
       color: #999;
       font-size: 0.85rem;
@@ -283,9 +430,6 @@
       margin: 2.5rem 0 1rem;
     }
 
-    @media (max-width: 600px) {
-      .bar-cell { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -305,6 +449,8 @@
       <button data-league="nba">NBA</button>
       <button data-league="nhl">NHL</button>
       <button data-league="mlb">MLB</button>
+      <button data-league="wnba">WNBA</button>
+      <button data-league="cfb">CFB</button>
     </div>
 
     <h2 id="title">Elo</h2>
