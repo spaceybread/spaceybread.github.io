@@ -101,7 +101,7 @@
       height: 0.4rem;
       margin-left: 0.35rem;
       vertical-align: 0.1rem;
-      background: #555;
+      background: #3a3a3a;
     }
 
     table.elo th.sortable:hover .ind {
@@ -185,8 +185,43 @@
 
     table.elo .lbl-short { display: none; } /* shorter header words on phones */
 
-    /* columns that drop out on narrow screens; anything still too wide scrolls sideways */
-    #tables { overflow-x: auto; }
+    /* the table never scrolls sideways: fitTables() steps it down through these until it fits its column */
+    table.elo.tight { font-size: 0.8rem; }
+    table.elo.tight th, table.elo.tight td { padding-left: 0.25rem; padding-right: 0.25rem; }
+    table.elo.tight th:not(.sorted) .ind { display: none; }
+    table.elo.tight .swatch { margin-right: 0.4rem; }
+    table.elo.squeeze .opt { display: none; }
+    table.elo.squeeze .lbl-long { display: none; }
+    table.elo.squeeze .lbl-short { display: inline; }
+    table.elo.bare td.name { max-width: 7.5rem; overflow: hidden; text-overflow: ellipsis; }
+    table.elo.cut-2 .p2,
+    table.elo.cut-2 .p3,
+    table.elo.cut-2 .p4,
+    table.elo.cut-2 .p5,
+    table.elo.cut-2 .p6,
+    table.elo.cut-2 .p7,
+    table.elo.cut-2 .p8 { display: none; }
+    table.elo.cut-3 .p3,
+    table.elo.cut-3 .p4,
+    table.elo.cut-3 .p5,
+    table.elo.cut-3 .p6,
+    table.elo.cut-3 .p7,
+    table.elo.cut-3 .p8 { display: none; }
+    table.elo.cut-4 .p4,
+    table.elo.cut-4 .p5,
+    table.elo.cut-4 .p6,
+    table.elo.cut-4 .p7,
+    table.elo.cut-4 .p8 { display: none; }
+    table.elo.cut-5 .p5,
+    table.elo.cut-5 .p6,
+    table.elo.cut-5 .p7,
+    table.elo.cut-5 .p8 { display: none; }
+    table.elo.cut-6 .p6,
+    table.elo.cut-6 .p7,
+    table.elo.cut-6 .p8 { display: none; }
+    table.elo.cut-7 .p7,
+    table.elo.cut-7 .p8 { display: none; }
+    table.elo.cut-8 .p8 { display: none; }
 
     @media (max-width: 640px) {
       table.elo .opt { display: none; }
@@ -203,9 +238,26 @@
 
     table.elo td {
       padding: 0.25rem 0.4rem;
-      border-bottom: 1px dotted #333;
       white-space: nowrap;
     }
+
+    /* numbers sit back; the sorted column and team names come forward */
+    table.elo td.num { color: #aaa; }
+    table.elo td.num.on { color: #fff; }
+    table.elo td.num.rank { color: #666; }
+    tr.team.rule td { border-bottom: 1px solid #2a2a2a; }
+
+    /* tiers: a dashed line and a label where the ratings have a natural gap */
+    tr.tier-row td { padding: 0.55rem 0.4rem 0.15rem; }
+    tr.tier-row:first-child td { padding-top: 0.35rem; }
+    .tier-line {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.7rem;
+      color: #666;
+    }
+    .tier-line::after { content: ''; flex: 1; border-top: 1px dashed #3a3a3a; }
 
     table.elo .num {
       text-align: right;
@@ -480,10 +532,32 @@
 
     /* "more stats" sits apart from the view buttons */
     .toggle button.aside {
-      margin-left: 1rem;
-      padding-left: 1.25rem;
+      margin-left: 0.25rem;
+      padding-left: 1rem;
       border-left: 1px solid #444;
     }
+
+    /* view toggles on the left, the time machine on the right */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.3rem 1.25rem;
+      margin: 1rem 0 0.75rem;
+    }
+
+    .controls .toggle,
+    .controls .timeline { margin: 0; }
+
+    /* the time machine takes what's left of the row; its track gives way first */
+    .controls .timeline { flex: 1 1 auto; justify-content: flex-end; min-width: 0; }
+
+    .move-small { color: #666; }
+
+    /* the game lists share one section, switched like the views */
+    .lists { margin-top: 2.25rem; }
+    .lists .toggle { margin: 0 0 0.6rem; font-size: 1rem; }
 
     /* time machine: a hairline track with a square thumb, stepped with ‹ › */
     .timeline {
@@ -509,8 +583,8 @@
     .timeline input[type="range"] {
       -webkit-appearance: none;
       appearance: none;
-      flex: 1;
-      max-width: 16rem;
+      flex: 0 1 8rem;
+      min-width: 3rem;
       height: 14px;
       margin: 0;
       cursor: pointer;
@@ -589,14 +663,14 @@
     }
 
     .panel-cols ul { list-style: none; margin: 0; padding: 0; }
-    .panel-cols li { margin-bottom: 0.15rem; white-space: nowrap; }
+    .panel-cols li { margin-bottom: 0.15rem; }
     .panel-cols .swatch { margin-right: 0.35rem; }
     .panel-cols .sub { color: #999; }
 
     @media (max-width: 640px) {
       .panel-cols { grid-template-columns: 1fr; }
       .games li { grid-template-columns: 3.2rem 1fr; }
-      .games .sub { grid-column: 2; text-align: left; }
+      .games .sub { grid-column: 2; text-align: left; white-space: normal; }
     }
 
     .note {
@@ -646,6 +720,7 @@
 
     <div id="bracket"></div>
 
+    <div class="controls">
     <div class="toggle" id="views" hidden>
       <button data-view="ranked" class="active">ranked</button>
       <button data-view="division">by division</button>
@@ -658,6 +733,7 @@
       <button id="tm-next" aria-label="next week">›</button>
       <span class="meta" id="tm-label"></span>
       <button id="tm-now" hidden>now</button>
+    </div>
     </div>
 
     <div id="tables"></div>

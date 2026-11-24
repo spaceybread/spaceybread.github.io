@@ -1152,7 +1152,8 @@
 
   function moveHTML(t) {
     if (!t.move) return '';
-    return t.move > 0 ? `<span class="up-txt">↑${t.move}</span>` : `<span class="down-txt">↓${-t.move}</span>`;
+    const cls = Math.abs(t.move) < 3 ? 'move-small' : t.move > 0 ? 'up-txt' : 'down-txt'; // only real moves get colour
+    return `<span class="${cls}">${t.move > 0 ? '↑' : '↓'}${Math.abs(t.move)}</span>`;
   }
 
   // one line under the table explaining whichever clinch letters are showing
@@ -1161,7 +1162,7 @@
     if (!shown.size) return '';
     const letters = [...Object.keys(clinchLegend).filter((k) => shown.has(k)), ...[...shown].filter((k) => !(k in clinchLegend))];
     return '<p class="clinch-key">' + letters.map((k) =>
-      `<span><span class="clinch">${esc(k)}</span> ${esc(clinchLegend[k] || 'clinch status from ESPN')}</span>`).join('') + '</p>';
+      `<span><span class="clinch">${esc(k)}</span> ${esc(clinchLegend[k] || 'clinch status from ESPN')}</span>`).join(' ') + '</p>';
   }
 
   function clinchHTML(t) {
@@ -1170,24 +1171,45 @@
     return ` <span class="clinch" data-tip="${esc(what)}">${esc(t.clinch)}</span>`;
   }
 
-  function table(rows, cols, limit) {
+  // which columns go first when a table can't otherwise fit (8 first, 1 never)
+  const PRIORITY = { rank: 1, elo: 1, rec: 2, playoff: 3, likely: 4, ap: 4, sor: 5, last: 5, l5: 6, sos: 7, left: 7, luck: 8, move: 8 };
+
+  function table(rows, cols, limit, tiers) {
     const col = cols.find((c) => c.key === sort.key) || cols.find((c) => c.key === 'elo');
     const v = (t) => { const x = col.val(t); return x == null ? Infinity * sort.dir : x; }; // blanks sort last
     rows = rows.slice().sort((a, b) => sort.dir * (v(a) - v(b)) || b.elo - a.elo);
     if (limit) rows = rows.slice(0, limit);
 
+    // tiers: when the table is in rating order, a little space above the few biggest gaps between neighbours
+    // (at most 4; only gaps more than twice the typical one and at least half a team's typical uncertainty)
+    const breaks = new Set();
+    const byRating = (col.key === 'elo' && sort.dir < 0) || (col.key === 'rank' && sort.dir > 0);
+    if (tiers && byRating && rows.length > 8) {
+      const mid = (xs) => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+      const gaps = rows.slice(1).map((t, i) => ({ i: i + 1, g: rows[i].elo - t.elo }));
+      const floor = Math.max(2 * mid(gaps.map((x) => x.g)), 0.5 * (mid(rows.map((t) => t.sd || 0)) || 0));
+      gaps.filter((x) => x.g > floor).sort((a, b) => b.g - a.g).slice(0, 4).forEach((x) => breaks.add(x.i));
+    }
+
     const lead = cols.filter((c) => c.lead);
     const rest = cols.filter((c) => !c.lead);
-    const cell = (c, t) => `<td class="num${c.opt ? ' opt' : ''}${c.key === 'rank' ? ' rank' : ''}${c.key === 'move' ? ' move' : ''}">${c.html(t)}</td>`;
-    const body = rows.map((t) => `<tr class="team" data-id="${t.id}" data-slug="${t.slug}" tabindex="0">
+    const pri = (c) => ` p${PRIORITY[c.key] || 5}`;
+    const cell = (c, t) => `<td class="num${pri(c)}${c.opt ? ' opt' : ''}${c.key === 'rank' ? ' rank' : ''}${c.key === 'move' ? ' move' : ''}${c === col ? ' on' : ''}">${c.html(t)}</td>`;
+    // with tiers showing, a labelled dashed line opens each tier and replaces the every-5-rows hairline
+    const tiered = breaks.size > 0;
+    const span = cols.length + 1;
+    let tierNo = 0;
+    const tierRow = () => `<tr class="tier-row" aria-hidden="true"><td colspan="${span}"><div class="tier-line">tier ${++tierNo}</div></td></tr>`;
+    const body = rows.map((t, i) => (tiered && (i === 0 || breaks.has(i)) ? tierRow() : '') +
+      `<tr class="team${!tiered && i % 5 === 4 ? ' rule' : ''}" data-id="${t.id}" data-slug="${t.slug}" tabindex="0">
         ${lead.map((c) => cell(c, t)).join('')}
-        <td>${swatch(t)}${esc(t.name)}${clinchHTML(t)}</td>
+        <td class="name">${swatch(t)}${esc(t.name)}${clinchHTML(t)}</td>
         ${rest.map((c) => cell(c, t)).join('')}
       </tr>`).join('');
 
     const th = (c) => {
       const on = c === col;
-      const cls = `num sortable${on ? ' sorted' : ''}${on && sort.dir > 0 ? ' asc' : ''}${c.lead ? ' tip-left' : ''}${c.opt ? ' opt' : ''}`;
+      const cls = `num sortable${pri(c)}${on ? ' sorted' : ''}${on && sort.dir > 0 ? ' asc' : ''}${c.lead ? ' tip-left' : ''}${c.opt ? ' opt' : ''}`;
       return `<th class="${cls}" data-sort="${c.key}" data-tip="${esc(c.tip)}" tabindex="0">` +
         `${c.short ? `<span class="lbl-long">${c.label}</span><span class="lbl-short">${c.short}</span>` : c.label}<span class="ind"></span></th>`;
     };
@@ -1296,6 +1318,23 @@
     });
   }
 
+  // the table must never scroll sideways: step through tighter layouts (see the CSS) until each one fits
+  const FITS = ['', 'tight', 'tight squeeze', 'tight squeeze bare'];
+  function fitTables() {
+    const box = $('tables');
+    for (const t of box.querySelectorAll('table.elo')) {
+      const fits = () => t.offsetWidth <= box.clientWidth;
+      for (const f of FITS) {
+        t.className = `elo ${f}`.trim();
+        if (fits()) break;
+      }
+      // still too wide: drop columns by priority until it fits
+      for (let k = 8; k >= 2 && !fits(); k--) t.className = `elo ${FITS[FITS.length - 1]} cut-${k}`;
+    }
+  }
+  let resizeTimer = 0;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitTables, 100); });
+
   function openPanel(tr, state) {
     const team = state[tr.dataset.id];
     const others = Object.values(state).filter((t) => t !== team && !t.hidden).sort((a, b) => a.name.localeCompare(b.name));
@@ -1323,6 +1362,7 @@
     </td>`;
     tr.after(row);
     tr.classList.add('open');
+    fitTables();
 
     const chart = row.querySelector('.chart');
     const legend = row.querySelector('.legend');
@@ -1519,6 +1559,7 @@
   let current = null;
   let openFromHash = () => {};
   let showAll = false;
+  let listTab = null; // which game list is showing (up next, recent, upsets)
   let renders = 0; // bumped on every render, so late background loads only touch the page that asked
   const cache = {};
 
@@ -1580,7 +1621,7 @@
       const post = played.some((g) => weekOf(g) === k && g.post);
       if (L.kind === 'cfb') return k > L.weeks ? 'the bowls and playoff' : `week ${k}${post ? ' · postseason' : ''}`;
       if (cfb && k > L.weeks) return 'the tournaments';
-      return `week ${k}${post ? ' · postseason' : ''} · through ${fmtDate(weekEnd[k])}`;
+      return `${post ? 'postseason' : `week ${k}`} · ${fmtDate(weekEnd[k])}`;
     };
     let at = weeks.length - 1; // index into weeks; the last one is "now"
     const apAt = (i) => (data.ap && data.ap[weeks[i]]) || null;
@@ -1624,7 +1665,7 @@
     // college lists 138 teams, so the ranked view starts at the top 25
     const more = () => (cfb ? `<button class="more" data-more>${showAll ? 'show top 25' : `show all ${all.length}`}</button>` : '');
     const views = {
-      ranked: () => table(rowsNow(), colsNow(true), cfb && !showAll ? 25 : 0) + more(),
+      ranked: () => table(rowsNow(), colsNow(true), cfb && !showAll ? 25 : 0, true) + more(),
       division: () => data.divisions.map(({ name, ids }) =>
         `<h3>${esc(name)}</h3>` + table(ids.map(byId), colsNow(false))).join(''),
     };
@@ -1636,6 +1677,7 @@
     const show = (v, scroll) => {
       view = v;
       $('tables').innerHTML = views[v]() + clinchKey(rowsNow());
+      fitTables();
       for (const b of document.querySelectorAll('#views button[data-view]')) b.classList.toggle('active', b.dataset.view === v);
       openFromHash(scroll);
     };
@@ -1679,7 +1721,7 @@
       at = Math.max(0, Math.min(weeks.length - 1, i));
       tm.value = at;
       tm.style.setProperty('--fill', `${weeks.length > 1 ? (100 * at) / (weeks.length - 1) : 100}%`);
-      $('tm-label').textContent = live() ? `${weekName(weeks[at]).replace(/^the /, '')} (latest)` : `after ${weekName(weeks[at])}`;
+      $('tm-label').textContent = weekName(weeks[at]).replace(/^the /, '');
       $('tm-now').hidden = live();
       $('tm-prev').disabled = at === 0;
       $('tm-next').disabled = live();
@@ -1723,10 +1765,10 @@
     // recent games, upsets and up next; redrawn when the pro leagues' betting lines arrive
     let shown = [];
     const drawLists = () => {
-      let html = '';
+      const parts = {};
       const recent = played.slice(-8).reverse();
       if (recent.length) {
-        html += '<h3>Recent games</h3><ul class="games">' + recent.map((g) => {
+        parts.recent = '<ul class="games">' + recent.map((g) => {
           const a = who(g.away), h = who(g.home);
           const awayWon = g.away.score > g.home.score;
           const gain = awayWon ? (g.aShift ?? -g.shift) : g.shift;
@@ -1741,7 +1783,7 @@
         .sort((x, y) => x.p - y.p)
         .slice(0, 5);
       if (upsets.length) {
-        html += '<h3>Biggest upsets</h3><ul class="games">' + upsets.map(({ g, p }) => {
+        parts.upsets = '<ul class="games">' + upsets.map(({ g, p }) => {
           const a = who(g.away), h = who(g.home);
           const winner = g.home.score > g.away.score ? h : a;
           return `<li><span class="sub">${fmtDate(g.date)}</span><span>${tag(a)} ${g.away.score} @ ${tag(h)} ${g.home.score}</span>
@@ -1755,7 +1797,7 @@
       const upcoming = data.games.filter((g) => !g.done && g.date >= cutoff);
       const next = upcoming.slice(0, 8);
       if (next.length) {
-        html += '<h3>Up next</h3>';
+        parts.next = '';
 
         // game of the week: over the next 7 days, the matchup whose weaker team is strongest,
         // which rewards both good teams and close odds
@@ -1767,13 +1809,22 @@
         if (gotw) {
           const g = gotw.g;
           shown.push(g);
-          html += `<p class="gotw-label">game of the week</p><ul class="games gotw">${upNext(g)}</ul>`;
+          parts.next += `<p class="gotw-label">game of the week</p><ul class="games gotw">${upNext(g)}</ul>`;
         }
 
         shown.push(...next);
-        html += '<ul class="games">' + next.filter((g) => !gotw || g !== gotw.g).map(upNext).join('') + '</ul>';
+        parts.next += '<ul class="games">' + next.filter((g) => !gotw || g !== gotw.g).map(upNext).join('') + '</ul>';
       }
-      $('recent').innerHTML = html;
+      // one section, switched like the views: up next by default in season, recent games otherwise
+      const tabs = [['next', 'up next'], ['recent', 'recent'], ['upsets', 'upsets']].filter(([k]) => parts[k]);
+      if (!tabs.length) { $('recent').innerHTML = ''; return; }
+      const on = parts[listTab] ? listTab : tabs[0][0];
+      $('recent').innerHTML = `<div class="lists"><div class="toggle">${tabs.map(([k, label]) =>
+        `<button data-list="${k}"${k === on ? ' class="active"' : ''}>${label}</button>`).join('')}</div>${parts[on]}</div>`;
+      $('recent').onclick = (e) => {
+        const b = e.target.closest('[data-list]');
+        if (b) { listTab = b.dataset.list; drawLists(); }
+      };
     };
     drawLists();
 
