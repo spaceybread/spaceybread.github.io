@@ -8,27 +8,40 @@
   const nbaMult = (m, d) => Math.pow(m + 3, 0.8) / (7.5 + 0.006 * d);
   const nhlMult = (m, d) => (0.6686 * Math.log(m) + 0.8048) * (2.05 / (d * 0.001 + 2.05));
 
+  // pro leagues: Elo with home field (hfa, in Elo points; none at neutral sites), a rest edge (rest.elo per extra day
+  // off, counting up to rest.cap days) and a start from last season (carry Elo points per point of average margin).
+  // All picked by backtesting five seasons per league, predicting every game from the ones before it.
+  // unc: rating uncertainty (see proUncertainty); its settings come from the same backtests, where the predicted
+  // spread of errors matched the actual spread to within about 10% at every stage of the season
   const LEAGUES = {
     nfl: {
-      games: 17, name: 'NFL', path: 'football/nfl', K: 20, mult: logMult, splitYear: false,
+      games: 17, name: 'NFL', path: 'football/nfl', K: 20, mult: logMult, splitYear: false, eloPerPoint: 25,
+      hfa: 30, rest: { cap: 13, elo: 5 }, carry: 10, // byes and short weeks
+      unc: { ridge: 4, half: 120, noise: 8.3, eloPer: 22.6 },
       rounds: ['Wild Card', 'Divisional', 'Conference', 'Super Bowl'], winsNeeded: [1, 1, 1, 1],
       playoff: { divTop: 1, wild: 3 }, // per conference
       clinch: { '*': 'clinched the #1 seed and a bye', z: 'clinched the division', y: 'clinched a wild card', x: 'clinched a playoff spot', e: 'eliminated from playoff contention' },
     },
     nba: {
-      games: 82, name: 'NBA', path: 'basketball/nba', K: 20, mult: nbaMult, splitYear: true, playIn: true,
+      games: 82, name: 'NBA', path: 'basketball/nba', K: 20, mult: nbaMult, splitYear: true, playIn: true, eloPerPoint: 28,
+      hfa: 40, rest: { cap: 1, elo: 60 }, carry: 12, // back-to-backs
+      unc: { ridge: 8, half: 60, noise: 13.7, eloPer: 21.3 },
       rounds: ['1st Round', 'Conf Semis', 'Conf Finals', 'Finals'], winsNeeded: [4, 4, 4, 4],
       playoff: { divTop: 0, wild: 6, playIn: true }, // seeds 7-10 go through the play-in
       clinch: { '*': 'clinched the best record in the league', z: 'clinched the #1 seed in the conference', y: 'clinched the division', x: 'clinched a playoff spot', xp: 'reached the playoffs through the play-in', pb: 'clinched a play-in spot', e: 'eliminated from playoff contention' },
     },
     nhl: {
-      games: 82, name: 'NHL', path: 'hockey/nhl', K: 6, mult: nhlMult, splitYear: true,
+      games: 82, name: 'NHL', path: 'hockey/nhl', K: 8, mult: nhlMult, splitYear: true,
+      hfa: 20, rest: { cap: 1, elo: 60 }, carry: 60, // back-to-backs
+      unc: { ridge: 40, half: 0, noise: 2.52, eloPer: 116 },
       rounds: ['1st Round', '2nd Round', 'Conf Final', 'Cup Final'], winsNeeded: [4, 4, 4, 4],
       playoff: { divTop: 3, wild: 2, points: true },
       clinch: { '*': "clinched the Presidents' Trophy (best record)", z: 'clinched the conference', y: 'clinched the division', x: 'clinched a playoff spot', e: 'eliminated from playoff contention' },
     },
     wnba: {
-      games: 44, name: 'WNBA', path: 'basketball/wnba', K: 20, mult: nbaMult, splitYear: false,
+      games: 44, name: 'WNBA', path: 'basketball/wnba', K: 30, mult: nbaMult, splitYear: false, eloPerPoint: 28,
+      hfa: 30, rest: { cap: 3, elo: 15 }, carry: 12,
+      unc: { ridge: 4, half: 0, noise: 10.3, eloPer: 22.8 },
       rounds: ['First Round', 'Semifinals', 'Finals'], winsNeeded: [2, 3, 4],
       roundMap: { RD16: 0, SEMI: 1, FINAL: 2 }, // ESPN skips a quarterfinal code here
       groups: 'conference',
@@ -44,10 +57,13 @@
       ridge: 2, // pull towards last season's rating, worth about two games of evidence
       carry: 0.8, // share of last season's rating a team starts with
       sigma: 12.5, // spread of college margins around the rating gap, for win probabilities
+      noise: 11.9, // spread of (capped) margins around the true gap, for rating uncertainty
       weeks: 16,
     },
     mlb: {
-      games: 162, name: 'MLB', path: 'baseball/mlb', K: 4, mult: logMult, splitYear: false,
+      games: 162, name: 'MLB', path: 'baseball/mlb', K: 3.2, mult: logMult, splitYear: false,
+      hfa: 20, rest: null, carry: 40, // rest made no difference in baseball
+      unc: { ridge: 80, half: 0, noise: 4.39, eloPer: 80 },
       rounds: ['Wild Card', 'Division Series', 'LCS', 'World Series'], winsNeeded: [2, 3, 4, 4],
       playoff: { divTop: 1, wild: 3 }, // per league
       clinch: { '*': 'clinched the #1 seed and a bye', x: 'clinched the division', y: 'clinched a wild card', e: 'eliminated from playoff contention' },
@@ -109,6 +125,22 @@
   }
 
   const scoreOf = (s) => (s && typeof s === 'object' ? Number(s.value) : Number(s));
+
+  // the sportsbook line ESPN shows for a game: the home spread and the home win chance implied
+  // by the moneylines (with the bookmaker's margin taken out); null when there isn't one
+  function parseLine(comp) {
+    const o = (comp.odds || [])[0];
+    if (!o) return null;
+    const num = (x) => (x == null || x === '' ? NaN : /^even$/i.test(x) ? 100 : Number(x));
+    const ml = o.moneyline || {};
+    const mlOf = (side) => num(((ml[side] || {}).close || {}).odds ?? ((o[side + 'TeamOdds'] || {}).moneyLine));
+    const implied = (x) => (x < 0 ? -x / (100 - x) : 100 / (x + 100));
+    const mh = mlOf('home'), ma = mlOf('away');
+    const pHome = isFinite(mh) && isFinite(ma) ? implied(mh) / (implied(mh) + implied(ma)) : null;
+    let spread = num((((o.pointSpread || {}).home || {}).close || {}).line);
+    if (!isFinite(spread)) spread = num(o.spread); // ESPN quotes this one from the home side too
+    return { spread: isFinite(spread) ? spread : null, pHome };
+  }
 
   async function loadYear(L, year, withPost) {
     const standings = await getJSON(`${BASE}/v2/sports/${L.path}/standings?level=3&season=${year}`);
@@ -186,7 +218,9 @@
 
         const status = (comp.status || ev.status || {}).type || {};
         games.push({
+          id: ev.id,
           date: new Date(ev.date),
+          neutral: !!comp.neutralSite,
           post: st !== 2, // playoffs and the NBA play-in
           round: st === 3 ? roundOf(comp, L) : -1,
           conf: st === 3 ? confOf(comp) : '',
@@ -271,6 +305,7 @@
         if (!sides.home || !sides.away || (sides.home.id === 'FCS' && sides.away.id === 'FCS')) continue;
         const status = (comp.status || ev.status || {}).type || {};
         games.push({
+          id: ev.id, line: status.completed ? undefined : parseLine(comp),
           date: new Date(ev.date), week, post: st === 3, round: st === 3 ? cfbRound(comp) : -1, conf: '', neutral: !!comp.neutralSite,
           done: !!status.completed, home: sides.home, away: sides.away,
         });
@@ -301,15 +336,46 @@
     if (cfb) {
       const p = await prev;
       data.prior = p ? priorFrom(L, p) : null;
+    } else {
+      data.prior = await marginsFrom(L, data.year - 1).catch(() => null);
     }
     return data;
   }
 
+  // pro leagues start each team from last season's average margin per game, which one standings request gives
+  async function marginsFrom(L, year) {
+    const standings = await getJSON(`${BASE}/v2/sports/${L.path}/standings?level=1&season=${year}`);
+    const out = {};
+    const walk = (node) => {
+      for (const c of node.children || []) walk(c);
+      for (const e of (node.standings || {}).entries || []) {
+        const v = (name) => Number(((e.stats || []).find((x) => x.name === name) || {}).value) || 0;
+        const gp = v('gamesPlayed') || v('wins') + v('losses') + v('ties') + v('otLosses');
+        if (gp) out[e.team.id] = (v('pointsFor') - v('pointsAgainst')) / gp;
+      }
+    };
+    walk(standings);
+    return Object.keys(out).length ? out : null;
+  }
+
   // ---------- elo ----------
 
-  function runElo(L, games, teams) {
+  function runElo(L, games, teams, prior) {
     const state = {};
-    for (const id in teams) state[id] = { ...teams[id], elo: START, last: 0, hist: [], oppSum: 0, oppN: 0, regN: 0, wins: 0, expWins: 0 };
+    for (const id in teams) {
+      const start = START + (prior && prior[id] != null ? L.carry * prior[id] : 0);
+      state[id] = { ...teams[id], elo: start, start, last: 0, hist: [], oppSum: 0, oppN: 0, regN: 0, wins: 0, expWins: 0 };
+    }
+    // home field and rest for every game, played or not: days off since each team's previous game, capped
+    const lastSeen = {};
+    for (const g of games) {
+      const off = (id) => (lastSeen[id] == null || !L.rest ? 0
+        : Math.min(L.rest.cap, Math.max(0, Math.round((g.date - lastSeen[id]) / 864e5) - 1)));
+      const rh = lastSeen[g.home.id] == null && L.rest ? L.rest.cap : off(g.home.id);
+      const ra = lastSeen[g.away.id] == null && L.rest ? L.rest.cap : off(g.away.id);
+      g.edge = (g.neutral ? 0 : L.hfa || 0) + (L.rest ? L.rest.elo * (rh - ra) : 0);
+      lastSeen[g.home.id] = lastSeen[g.away.id] = g.date;
+    }
     // luck ignores each team's first quarter of the season, while everyone's still near 1600
     const settle = Math.ceil(L.games / 4);
 
@@ -319,7 +385,7 @@
       const h = state[g.home.id];
       const a = state[g.away.id];
 
-      const diff = h.elo - a.elo;
+      const diff = h.elo - a.elo + g.edge;
       const expHome = 1 / (1 + Math.pow(10, -diff / 400));
       const margin = g.home.score - g.away.score;
       const actual = margin > 0 ? 1 : margin < 0 ? 0 : 0.5;
@@ -343,6 +409,47 @@
       played.push({ ...g, shift, expHome });
     }
     return { state, played };
+  }
+
+  // rating uncertainty for the pro leagues: the standard error a least-squares margin fit of the same games would
+  // give each team (refit after every day's games, older games counting less in leagues with `half`), converted
+  // to Elo. It depends only on who has played whom and when, not on the results
+  function proUncertainty(L, data, state) {
+    const U = L.unc;
+    const ids = Object.keys(state);
+    const ix = Object.fromEntries(ids.map((id, i) => [id, i]));
+    const n = ids.length + 1; // plus home field
+    const scale = U.noise * U.eloPer;
+    const sd0 = scale / Math.sqrt(U.ridge);
+    for (const id of ids) { state[id].sd0 = state[id].sd = sd0; }
+    const done = data.games.filter((g) => g.done);
+    const next = Object.fromEntries(ids.map((id) => [id, 0])); // next hist entry to fill per team
+    for (let k = 0; k < done.length;) {
+      const day = done[k].date.toDateString();
+      let e = k;
+      while (e < done.length && done[e].date.toDateString() === day) e++;
+      const now = done[e - 1].date;
+      const A = new Float64Array(n * n);
+      for (let i = 0; i < n - 1; i++) A[i * n + i] = U.ridge;
+      A[n * n - 1] = 0.01;
+      for (let j = 0; j < e; j++) {
+        const g = done[j];
+        const w = U.half ? Math.pow(0.5, (now - g.date) / (U.half * 864e5)) : 1;
+        const v = [[ix[g.home.id], 1], [ix[g.away.id], -1]];
+        if (!g.neutral) v.push([n - 1, 1]);
+        for (const [a, sa] of v) for (const [b, sb] of v) A[a * n + b] += w * sa * sb;
+      }
+      const inv = inverse(A, n);
+      for (let j = k; j < e; j++) {
+        for (const id of [done[j].home.id, done[j].away.id]) {
+          const sd = scale * Math.sqrt(inv[ix[id] * n + ix[id]]);
+          const h = state[id].hist[next[id]++];
+          if (h) h.sd = sd;
+          state[id].sd = sd;
+        }
+      }
+      k = e;
+    }
   }
 
   // ---------- college ratings ----------
@@ -374,6 +481,35 @@
     return x;
   }
 
+  // full inverse by Gauss-Jordan elimination (A isn't modified); for the uncertainty of least-squares ratings
+  function inverse(A, n) {
+    const w = 2 * n;
+    const M = new Float64Array(n * w);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) M[i * w + j] = A[i * n + j];
+      M[i * w + n + i] = 1;
+    }
+    for (let c = 0; c < n; c++) {
+      let p = c;
+      for (let r = c + 1; r < n; r++) if (Math.abs(M[r * w + c]) > Math.abs(M[p * w + c])) p = r;
+      if (p !== c) for (let k = 0; k < w; k++) { const t = M[c * w + k]; M[c * w + k] = M[p * w + k]; M[p * w + k] = t; }
+      const d = M[c * w + c];
+      if (!d) continue;
+      for (let k = c; k < w; k++) M[c * w + k] /= d;
+      for (let r = 0; r < n; r++) {
+        const f = r === c ? 0 : M[r * w + c];
+        if (!f) continue;
+        for (let k = c; k < w; k++) M[r * w + k] -= f * M[c * w + k];
+      }
+    }
+    const out = new Float64Array(n * n);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) out[i * n + j] = M[i * w + n + j];
+    return out;
+  }
+
+  // a normal draw (Box-Muller)
+  const gauss = () => Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());
+
   // standard normal CDF (Abramowitz & Stegun 7.1.26)
   function normCdf(z) {
     const x = Math.abs(z) / Math.SQRT2;
@@ -384,7 +520,8 @@
 
   // power rating: least-squares fit of rating gaps (plus home field, learned from the games) to capped
   // score margins, pulled towards each team's starting rating; centred so an average FBS team is 0
-  function marginRatings(L, ids, ix, games, prior) {
+  // with withSd, also each team's standard error: noise × √(diagonal of the inverted system)
+  function marginRatings(L, ids, ix, games, prior, withSd) {
     const n = ids.length + 1; // the last unknown is home field
     const A = new Float64Array(n * n);
     const b = new Float64Array(n);
@@ -402,12 +539,14 @@
         for (const [j, sj] of v) A[i * n + j] += si * sj;
       }
     }
+    const inv = withSd ? inverse(A, n) : null;
     const x = solve(A, b, n);
     const r = x.subarray(0, n - 1);
+    const sd = inv ? Float64Array.from({ length: n - 1 }, (_, i) => L.noise * Math.sqrt(inv[i * n + i])) : null;
     let sum = 0, k = 0;
     ids.forEach((id, i) => { if (id !== 'FCS') { sum += r[i]; k++; } });
     for (let i = 0; i < n - 1; i++) r[i] -= k ? sum / k : 0;
-    return { r, hfa: x[n - 1] };
+    return { r, hfa: x[n - 1], sd };
   }
 
   // starting ratings: last season's final power rating, scaled back towards average;
@@ -433,7 +572,8 @@
     let before = Float64Array.from(ids, (id) => (prior && prior[id]) || 0);
     let now = before;
     let hfa = 0; // home field, refit each week with everything else
-    for (const id of ids) state[id].start = now[ix[id]];
+    const sd0 = L.noise / Math.sqrt(L.ridge); // before any games, the starting rating is worth `ridge` games
+    for (const id of ids) { state[id].start = now[ix[id]]; state[id].sd0 = state[id].sd = sd0; }
     const played = [];
     const edge = (g) => (g.neutral ? 0 : hfa);
 
@@ -453,7 +593,7 @@
 
     for (const w of weeks) {
       const upto = done.filter((g) => g.week <= w);
-      const fit = marginRatings(L, ids, ix, upto, prior);
+      const fit = marginRatings(L, ids, ix, upto, prior, true);
       const r = fit.r;
       // odds from the ratings going into the week
       for (const g of done.filter((x) => x.week === w)) {
@@ -466,12 +606,13 @@
         const h = state[g.home.id], a = state[g.away.id];
         const hs = r[i] - (h.hist.length ? h.hist[h.hist.length - 1].elo : h.start);
         const as = r[j] - (a.hist.length ? a.hist[a.hist.length - 1].elo : a.start);
-        h.hist.push({ date: g.date, post: g.post, opp: a.id, oppName: g.away.name, home: true, neutral: g.neutral, us: g.home.score, them: g.away.score, elo: r[i], shift: hs, sor: sor[i] });
-        a.hist.push({ date: g.date, post: g.post, opp: h.id, oppName: g.home.name, home: false, neutral: g.neutral, us: g.away.score, them: g.home.score, elo: r[j], shift: as, sor: sor[j] });
+        h.hist.push({ date: g.date, week: g.week, post: g.post, opp: a.id, oppSide: g.away, oppName: g.away.name, home: true, neutral: g.neutral, us: g.home.score, them: g.away.score, elo: r[i], sd: fit.sd[i], shift: hs, sor: sor[i] });
+        a.hist.push({ date: g.date, week: g.week, post: g.post, opp: h.id, oppSide: g.home, oppName: g.home.name, home: false, neutral: g.neutral, us: g.away.score, them: g.home.score, elo: r[j], sd: fit.sd[j], shift: as, sor: sor[j] });
         played.push({ ...g, shift: hs, aShift: as });
       }
       before = now;
       now = r;
+      ids.forEach((id, i) => { state[id].sd = fit.sd[i]; });
     }
 
     ids.forEach((id, i) => {
@@ -527,10 +668,10 @@
     if (!rem.length) return null;
 
     const elo = ids.map((id) => state[id].elo);
-    const winP = (a, b) => 1 / (1 + Math.pow(10, -(elo[a] - elo[b]) / 400));
+    const winP = (a, b) => 1 / (1 + Math.pow(10, -(elo[a] - elo[b] + (L.hfa || 0)) / 400)); // a hosts (the play-in's higher seed)
     const gh = Int32Array.from(rem, (g) => ix[g.home.id]);
     const ga = Int32Array.from(rem, (g) => ix[g.away.id]);
-    const gp = Float64Array.from(rem, (g) => winP(ix[g.home.id], ix[g.away.id]));
+    const gp = Float64Array.from(rem, (g) => 1 / (1 + Math.pow(10, -(elo[ix[g.home.id]] - elo[ix[g.away.id]] + (g.edge || 0)) / 400)));
     const base = Float64Array.from(ids, (id) => {
       const r = data.teams[id].wl;
       return P.points ? r.pts : r.w + 0.5 * r.t;
@@ -674,7 +815,7 @@
     return `${r}%`;
   }
 
-  // offsets from an average team; elo is zero-sum, so the league average is always START
+  // offsets from an average team (elo is zero-sum, and last season's margins average out, so the mean stays near START)
   const signed = (v) => {
     if (v == null) return '';
     const r = Math.round(v);
@@ -693,53 +834,74 @@
     return r > 0 ? `<span class="up-txt">+${r.toFixed(1)}</span>` : `<span class="down-txt">${r.toFixed(1)}</span>`;
   }
 
+  // likely rank: the middle 80% of where a team lands when every rating is redrawn within its uncertainty
+  const LIKELY = {
+    key: 'likely', label: 'likely', asc: true, opt: true, // on phones it's in the team panel instead
+    tip: 'likely rank: the middle 80% of where the team would rank if every rating were redrawn within its uncertainty ' +
+      '(the ± in the team panel, checked against five seasons of results). Narrow = settled, wide = still up for grabs',
+    val: (t) => (t.lo == null ? null : t.lo + t.hi / 1000), html: (t) => (t.lo == null ? '' : t.lo === t.hi ? t.lo : `${t.lo}–${t.hi}`),
+  };
+
   // numeric columns: each one sorts on click and explains itself on hover
+  let showMore = false; // the secondary columns (marked more) only show after "more stats"
   function columns(L, extra, showRank) {
+    return allColumns(L, extra, showRank).filter((c) => showMore || !c.more);
+  }
+
+  function allColumns(L, extra, showRank) {
     if (L.kind === 'cfb') return [
-      extra.move && { key: 'move', label: 'wk', lead: true, tip: 'places moved in the power rankings since last week',
+      extra.move && { key: 'move', label: 'wk', lead: true, opt: true, tip: 'places moved in the power rankings since last week',
         val: (t) => t.move ?? null, html: moveHTML },
       showRank && { key: 'rank', label: '#', lead: true, asc: true, tip: 'rank by power rating',
         val: (t) => t.rank, html: (t) => t.rank },
+      extra.ap && { key: 'ap', label: 'ap', asc: true,
+        tip: `AP Top 25 rank, from the poll released ${extra.ap.date ? fmtDate(extra.ap.date) : 'after these games'}` +
+          (extra.ap.final ? ' (the final poll)' : ''),
+        val: (t) => extra.ap.rank[t.id] ?? null, html: (t) => extra.ap.rank[t.id] ?? '' },
       { key: 'rec', label: 'rec', tip: 'overall record; sorts by win percentage',
         val: (t) => t.recVal, html: (t) => esc(t.record) },
       { key: 'elo', label: 'power', tip: `power rating: points better than an average FBS team on a neutral field. Fit to every game so far ` +
         `(margins capped at ${L.cap}, home field worth ${(extra.hfa || 0).toFixed(1)} learned from the games), starting from ` +
         `${Math.round(L.carry * 100)}% of last season's rating, which counts for about ${L.ridge} games`,
         val: (t) => t.elo, html: (t) => luckText(t.elo) },
-      { key: 'sor', label: 'sor', tip: 'strength of record: wins above what a typical top-25 team would expect against the same schedule (+ = more impressive)',
+      LIKELY,
+      { key: 'sor', label: 'sor', opt: true, tip: 'strength of record: wins above what a typical top-25 team would expect against the same schedule (+ = more impressive)',
         val: (t) => t.sor, html: (t) => (t.sor == null ? '' : luckText(t.sor)) },
-      { key: 'last', label: 'last', tip: 'change in power rating since last week',
+      { more: true, key: 'last', label: 'last', tip: 'change in power rating since last week',
         val: (t) => t.last, html: (t) => delta1(t.last) },
-      { key: 'sos', label: 'sos', opt: true, tip: 'strength of schedule: average power rating of opponents faced (+ = tougher)',
+      { more: true, key: 'sos', label: 'sos', opt: true, tip: 'strength of schedule: average power rating of opponents faced (+ = tougher)',
         val: (t) => t.sos, html: (t) => (t.sos == null ? '' : luckText(t.sos)) },
-      extra.left && { key: 'left', label: 'left', opt: true, tip: 'average power rating of the opponents still to play (+ = tougher)',
+      extra.left && { more: true, key: 'left', label: 'left', opt: true, tip: 'average power rating of the opponents still to play (+ = tougher)',
         val: (t) => t.left, html: (t) => (t.left == null ? '' : luckText(t.left)) },
     ].filter(Boolean);
 
     return [
-      extra.move && { key: 'move', label: 'wk', lead: true, tip: 'places moved in the Elo rankings over the past week',
+      extra.move && { key: 'move', label: 'wk', lead: true, opt: true, tip: 'places moved in the Elo rankings over the past week',
         val: (t) => t.move ?? null, html: moveHTML },
       showRank && { key: 'rank', label: '#', lead: true, asc: true, tip: 'rank by current Elo',
         val: (t) => t.rank, html: (t) => t.rank },
       { key: 'rec', label: 'rec',
         tip: (L.playoff || {}).points ? 'regular-season record (W-L-OTL); sorts by points' : 'regular-season record; sorts by win percentage',
         val: (t) => t.recVal, html: (t) => esc(t.record) },
-      { key: 'elo', label: 'elo', tip: `current Elo rating; every team started the season at ${START}`,
+      { key: 'elo', label: 'elo', tip: `current Elo rating (${START} is average). Teams started from last season's average margin ` +
+        `(${L.carry} Elo per ${L.eloPerPoint ? 'point' : (L.playoff || {}).points ? 'goal' : 'run'} per game); predictions add home field ` +
+        `(${L.hfa})${L.rest ? ` and rest (${L.rest.elo} per extra day off${L.rest.cap > 1 ? `, up to ${L.rest.cap}` : ', so mainly back-to-backs'})` : ''}`,
         val: (t) => t.elo, html: (t) => Math.round(t.elo) },
-      { key: 'last', label: 'last', tip: 'rating change from their most recent game',
+      LIKELY,
+      { more: true, key: 'last', label: 'last', tip: 'rating change from their most recent game',
         val: (t) => t.last, html: (t) => delta(t.last) },
-      { key: 'l5', label: 'l5', tip: 'form: rating change over their last 5 games',
+      { more: true, key: 'l5', label: 'l5', tip: 'form: rating change over their last 5 games',
         val: (t) => t.l5, html: (t) => delta(t.l5) },
-      extra.odds && { key: 'playoff', label: 'playoff',
+      extra.odds && { key: 'playoff', label: 'playoff', short: 'odds',
         tip: `chance of making the playoffs, from ${SIMS.toLocaleString('en-US')} simulations of the rest of the regular season`,
         val: (t) => extra.odds[t.id], html: (t) => esc(pctText(extra.odds[t.id])) },
-      { key: 'sos', label: 'sos',
+      { more: true, key: 'sos', label: 'sos',
         tip: 'strength of schedule so far: average rating of opponents faced, relative to an average team (+ = tougher)',
         val: (t) => t.sos, html: (t) => signed(t.sos), opt: true },
-      extra.left && { key: 'left', label: 'left',
+      extra.left && { more: true, key: 'left', label: 'left',
         tip: 'strength of the schedule still to play: average current rating of remaining opponents, relative to an average team (+ = tougher)',
         val: (t) => t.left, html: (t) => signed(t.left), opt: true },
-      { key: 'luck', label: 'luck', opt: true,
+      { more: true, key: 'luck', label: 'luck', opt: true,
         tip: `wins minus the wins Elo expected from the pre-game odds, counting from game ${Math.ceil(L.games / 4) + 1} ` +
           '(after the first quarter of the season) (+ = winning more than they "should")',
         val: (t) => (t.expWins ? t.wins - t.expWins : null),
@@ -789,7 +951,7 @@
       const on = c === col;
       const cls = `num sortable${on ? ' sorted' : ''}${on && sort.dir > 0 ? ' asc' : ''}${c.lead ? ' tip-left' : ''}${c.opt ? ' opt' : ''}`;
       return `<th class="${cls}" data-sort="${c.key}" data-tip="${esc(c.tip)}" tabindex="0">` +
-        `${c.label}<span class="ind"></span></th>`;
+        `${c.short ? `<span class="lbl-long">${c.label}</span><span class="lbl-short">${c.short}</span>` : c.label}<span class="ind"></span></th>`;
     };
 
     return `<table class="elo">
@@ -815,20 +977,48 @@
 
   // what the history chart can plot; the pro leagues only have Elo
   function metricsFor(L) {
-    if (L.kind !== 'cfb') return { elo: { name: 'elo', base: START, fmt: (v) => Math.round(v), dfmt: delta, span: 20 } };
+    if (L.kind !== 'cfb') return { elo: { name: 'elo', base: START, fmt: (v) => Math.round(v), dfmt: delta, span: 20, carried: true, band: true } };
     return {
-      elo: { name: 'power rating', base: 0, fmt: luckText, dfmt: delta1, span: 4, carried: true },
+      elo: { name: 'power rating', base: 0, fmt: luckText, dfmt: delta1, span: 4, carried: true, band: true },
       sor: { name: 'strength of record', base: 0, fmt: luckText, dfmt: delta1, span: 1 },
     };
   }
 
   let curL = null; // the league being shown
   let curHfa = 0; // college home field, in points
-  // chance a beats b; college adds home field when a is at home (pro Elo has none)
-  const winProb = (a, b, home = false) => (curL.kind === 'cfb'
-    ? normCdf((a.elo - b.elo + (home ? curHfa : 0)) / curL.sigma)
-    : 1 / (1 + Math.pow(10, -(a.elo - b.elo) / 400)));
-  const gameProb = (state, g) => winProb(state[g.home.id], state[g.away.id], !g.neutral);
+  // chance a beats b, given a's edge (college: home field in points; pro: home field and rest in Elo)
+  const winProb = (a, b, edge = 0) => (curL.kind === 'cfb'
+    ? normCdf((a.elo - b.elo + edge) / curL.sigma)
+    : 1 / (1 + Math.pow(10, -(a.elo - b.elo + edge) / 400)));
+  const edgeOf = (g) => (curL.kind === 'cfb' ? (g.neutral ? 0 : curHfa) : g.edge || 0);
+  const gameProb = (state, g) => winProb(state[g.home.id], state[g.away.id], edgeOf(g));
+
+  let curState = {}; // ratings of the league being shown
+  let curData = null; // its games
+  // who to show for a game side: the team, or for college the actual FCS school behind the pooled rating
+  const who = (side) => (side.name ? { name: side.name, color: side.color, alt: side.alt, fcs: true } : curState[side.id]);
+  const tag = (t) => `${swatch(t)}${esc(t.name)}${t.fcs ? ' <span class="meta">(FCS)</span>' : ''}`;
+  const rankTag = (t) => (t.fcs || !t.rank ? '' : `#${t.rank} `) + tag(t);
+
+  // "Iowa by 4.5 · 65%  line Iowa −6.5". Football and basketball quote spreads; hockey and baseball
+  // lines are moneylines, so those compare win chances instead
+  function oddsText(g) {
+    const pHome = gameProb(curState, g);
+    const h = who(g.home), a = who(g.away);
+    const fav = pHome >= 0.5 ? h : a;
+    const pct = pctText(Math.max(pHome, 1 - pHome));
+    const half = (x) => String(Math.round(Math.abs(x) * 2) / 2);
+    const gap = curState[g.home.id].elo - curState[g.away.id].elo;
+    const pts = curL.kind === 'cfb' ? gap + edgeOf(g) : curL.eloPerPoint ? (gap + edgeOf(g)) / curL.eloPerPoint : null;
+    const model = pts == null ? `${fav.name} ${pct}` : half(pts) === '0' ? `toss-up · ${pct}` : `${fav.name} by ${half(pts)} · ${pct}`;
+    let line = '';
+    if (g.line && pts != null && g.line.spread != null) {
+      line = g.line.spread === 0 ? "line pick'em" : `line ${(g.line.spread < 0 ? h : a).name} −${half(g.line.spread)}`;
+    } else if (g.line && g.line.pHome != null) {
+      line = `line ${(g.line.pHome >= 0.5 ? h : a).name} ${pctText(Math.max(g.line.pHome, 1 - g.line.pHome))}`;
+    }
+    return esc(model) + (line ? `<span class="line"> · ${esc(line)}</span>` : '');
+  }
   const baseOf = (L) => L.base ?? START;
   const fmtR = (v) => (curL.kind === 'cfb' ? luckText(v) : Math.round(v)); // college ratings are small, keep a decimal
   const hashParts = () => location.hash.slice(1).split('/');
@@ -849,24 +1039,49 @@
     setHash(tr.dataset.slug);
   }
 
+  // 80% rank ranges (t.lo, t.hi) for a set of teams, from redrawing every rating within its uncertainty
+  const RANK_SIMS = 2000;
+  function rankRanges(rows) {
+    const n = rows.length;
+    const draws = new Float64Array(n);
+    const order = Array.from({ length: n }, (_, i) => i);
+    const ranks = rows.map(() => new Int32Array(RANK_SIMS));
+    for (let s = 0; s < RANK_SIMS; s++) {
+      for (let i = 0; i < n; i++) draws[i] = rows[i].elo + (rows[i].sd || 0) * gauss();
+      order.sort((a, b) => draws[b] - draws[a]);
+      order.forEach((i, k) => { ranks[i][s] = k + 1; });
+    }
+    rows.forEach((t, i) => {
+      const r = ranks[i].sort();
+      t.lo = r[Math.floor(RANK_SIMS * 0.1)];
+      t.hi = r[Math.floor(RANK_SIMS * 0.9)];
+    });
+  }
+
   function openPanel(tr, state) {
     const team = state[tr.dataset.id];
     const others = Object.values(state).filter((t) => t !== team && !t.hidden).sort((a, b) => a.name.localeCompare(b.name));
-    const facts = [team.streak && `streak ${esc(team.streak)}`, team.l10 && `last 10: ${esc(team.l10)}`].filter(Boolean);
+    const pm = team.sd == null ? '' : curL.kind === 'cfb' ? team.sd.toFixed(1) : Math.round(team.sd);
+    const facts = [
+      pm !== '' && `<span data-tip="uncertainty: about a 2-in-3 chance the team's true strength is within this much of its rating. It shrinks as games are played; the shaded band on the chart shows it game by game">rating ±${pm}</span>`,
+      team.lo != null && `likely rank ${team.lo === team.hi ? team.lo : `${team.lo}–${team.hi}`}`,
+      team.streak && `streak ${esc(team.streak)}`, team.l10 && `last 10: ${esc(team.l10)}`,
+    ].filter(Boolean);
 
     const row = document.createElement('tr');
     row.className = 'hist';
     row.innerHTML = `<td colspan="${tr.children.length}">
+      ${facts.length ? `<div class="panel-meta">${facts.join(' · ')}</div>` : ''}
       <div class="panel-meta">
-        ${facts.join(' · ')}${facts.length ? ' · ' : ''}
         ${curL.kind === 'cfb' ? `<label>plot <select class="metric">${Object.entries(metricsFor(curL)).map(([k, m]) =>
-          `<option value="${k}">${esc(m.name)}</option>`).join('')}</select></label> · ` : ''}
-        <label>compare with <select class="cmp"><option value="">—</option>${others.map((t) =>
+          `<option value="${k}">${esc(m.name)}</option>`).join('')}</select></label> &nbsp; ` : ''}
+        <label>compare <select class="cmp"><option value="">—</option>${others.map((t) =>
           `<option value="${t.id}">${esc(t.name)}</option>`).join('')}</select></label>
       </div>
       <div class="legend" hidden></div>
       <div class="chart"></div>
       <p class="h2h meta" hidden></p>
+      ${panelExtras(team)}
     </td>`;
     tr.after(row);
     tr.classList.add('open');
@@ -897,6 +1112,34 @@
     return row;
   }
 
+  // best win and worst loss (judged by the opponent's current rating) and the games still to play
+  function panelExtras(team) {
+    const opp = (h) => (h.oppSide ? who(h.oppSide) : curState[h.opp]);
+    const rating = (h) => curState[h.opp].elo;
+    const pick = (list, better) => list.reduce((x, h) => (!x || better(rating(h), rating(x)) ? h : x), null);
+    const best = pick(team.hist.filter((h) => h.us > h.them), (p, q) => p > q);
+    const worst = pick(team.hist.filter((h) => h.us < h.them), (p, q) => p < q);
+    const game = (label, h) => `<li><span class="sub">${label}</span> ${rankTag(opp(h))} ${h.us}–${h.them}</li>`;
+    const resume = [best && game('best win', best), worst && game('worst loss', worst)].filter(Boolean);
+
+    const cutoff = Date.now() - 12 * 3600 * 1000;
+    const left = curData.games.filter((g) => !g.done && g.date >= cutoff && (g.home.id === team.id || g.away.id === team.id));
+    const SHOW = 5;
+    const sched = left.slice(0, SHOW).map((g) => {
+      const home = g.home.id === team.id;
+      const p = gameProb(curState, g);
+      return `<li><span class="sub">${fmtDate(g.date)}</span> ${home || g.neutral ? 'vs' : '@'} ${rankTag(who(home ? g.away : g.home))}
+        <span class="sub">${esc(pctText(home ? p : 1 - p))}</span></li>`;
+    });
+    if (left.length > SHOW) sched.push(`<li class="sub">+ ${left.length - SHOW} more</li>`);
+
+    if (!resume.length && !sched.length) return '';
+    return `<div class="panel-cols">
+      ${resume.length ? `<div><h4>résumé</h4><ul>${resume.join('')}</ul></div>` : ''}
+      ${sched.length ? `<div><h4>still to play · win chance</h4><ul>${sched.join('')}</ul></div>` : ''}
+    </div>`;
+  }
+
   function drawHistory(el, team, state, other, mkey = 'elo') {
     if (!team.hist.length) {
       el.innerHTML = '<p class="meta">no games yet</p>';
@@ -908,7 +1151,8 @@
     const base = M.base;
     const series = [team, other].filter(Boolean).map((t, k) => {
       // college power ratings start from last season's, everything else from the baseline
-      const pts = [{ v: M.carried && t.start != null ? t.start : base }, ...t.hist.map((h) => ({ ...h, v: h[mkey] }))];
+      const pts = [{ v: M.carried && t.start != null ? t.start : base, sd: t.sd0 }, ...t.hist.map((h) => ({ ...h, v: h[mkey] }))];
+      if (!M.band) pts.forEach((p) => { p.sd = null; });
       pts.forEach((p, i) => { p.d = i ? p.v - pts[i - 1].v : 0; });
       return { t, cls: other ? (k ? 'line b' : 'line a') : 'line', pts };
     });
@@ -919,8 +1163,9 @@
     const pad = { l: 40, r: 44, t: 14, b: 22 };
 
     const vals = series.flatMap((sr) => sr.pts.map((p) => p.v));
-    const lo = Math.min(base, ...vals);
-    const hi = Math.max(base, ...vals);
+    // the uncertainty band (one standard error either side) sets the range too
+    const lo = Math.min(base, ...series.flatMap((sr) => sr.pts.map((p) => p.v - (p.sd || 0))));
+    const hi = Math.max(base, ...series.flatMap((sr) => sr.pts.map((p) => p.v + (p.sd || 0))));
     const room = Math.max(M.span, hi - lo) * 0.08;
     const y0 = lo - room, y1 = hi + room;
 
@@ -957,6 +1202,14 @@
       down.ly = mid + 6;
     }
     for (const sr of series) {
+      if (sr.pts.every((p) => p.sd != null)) {
+        const k = sr.cls.split(' ')[1] || '';
+        const up = sr.pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v + p.sd).toFixed(1)}`).join('');
+        const down = sr.pts.map((p, i) => `L${x(i).toFixed(1)},${y(p.v - p.sd).toFixed(1)}`).reverse().join('');
+        svg += `<path class="band ${k}" d="${up}${down}Z"/>`;
+      }
+    }
+    for (const sr of series) {
       const d = sr.pts.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join('');
       svg += `<path class="${sr.cls}" d="${d}"/>`;
     }
@@ -985,10 +1238,11 @@
       const p = sr.pts[i];
       if (!p) return `${esc(sr.t.name)}: season over`;
       const who = other ? `${esc(sr.t.name)}: ` : '';
-      if (i === 0) return `${who}season start · ${M.carried && sr.t.start != null ? `${M.fmt(p.v)} (from last season)` : base}`;
+      const pm = p.sd != null ? ` ±${curL.kind === 'cfb' ? p.sd.toFixed(1) : Math.round(p.sd)}` : '';
+      if (i === 0) return `${who}season start · ${M.carried && sr.t.start != null ? `${M.fmt(p.v)}${pm} (from last season)` : base}`;
       const res = p.us > p.them ? 'W' : p.us < p.them ? 'L' : 'T';
       return `${who}${fmtDate(p.date)} · ${res} ${p.us}–${p.them} ${p.home || p.neutral ? 'vs' : '@'}${p.neutral ? ' (neutral)' : ''} ${esc(p.oppName || state[p.opp].name)}` +
-        `${other ? ' · ' : '<br>'}${M.fmt(p.v)} ${M.dfmt(p.d)}`;
+        `${other ? ' · ' : '<br>'}${M.fmt(p.v)}${pm} ${M.dfmt(p.d)}`;
     };
 
     const hide = () => {
@@ -1027,6 +1281,7 @@
   let current = null;
   let openFromHash = () => {};
   let showAll = false;
+  let renders = 0; // bumped on every render, so late background loads only touch the page that asked
   const cache = {};
 
   function render(key, data) {
@@ -1034,10 +1289,14 @@
     curL = L;
     const cfb = L.kind === 'cfb';
     const base = baseOf(L);
-    const { state, played, hfa } = cfb ? rateCfb(L, data) : runElo(L, data.games, data.teams);
+    const { state, played, hfa } = cfb ? rateCfb(L, data) : runElo(L, data.games, data.teams, data.prior);
     curHfa = hfa || 0;
+    if (!cfb) proUncertainty(L, data, state);
+    curState = state;
+    curData = data;
     const all = Object.values(state).filter((t) => !t.hidden).sort((a, b) => b.elo - a.elo);
     all.forEach((t, i) => { t.rank = i + 1; });
+    rankRanges(all);
     clinchLegend = L.clinch || {};
 
     // form: rating change over the last 5 games
@@ -1048,7 +1307,7 @@
     const weekAgo = latest && new Date(latest - 7 * 24 * 3600 * 1000);
     if (!cfb && weekAgo && played[0].date <= weekAgo) { // college sets this from its weekly refits
       const eloAt = (t) => {
-        let e = START;
+        let e = t.start;
         for (const h of t.hist) { if (h.date > weekAgo) break; e = h.elo; }
         return e;
       };
@@ -1071,22 +1330,73 @@
     }
     const extra = { odds: playoffOdds(L, data, state), left: all.some((t) => t.remN), move: all.some((t) => t.move !== undefined), hfa };
 
+    // time machine: the table as it stood after each week. College uses its own week numbers;
+    // the pro leagues count 7-day stretches from the first game
+    const WEEK = 7 * 24 * 3600 * 1000;
+    const day0 = played.length ? new Date(played[0].date).setHours(0, 0, 0, 0) : 0;
+    const weekOf = cfb ? (h) => h.week : (h) => Math.floor((h.date - day0) / WEEK) + 1;
+    const weeks = [...new Set(played.map(weekOf))].sort((p, q) => p - q);
+    const weekEnd = Object.fromEntries(weeks.map((k) => [k, played.filter((g) => weekOf(g) === k).pop().date]));
+    const weekName = (k) => {
+      const post = played.some((g) => weekOf(g) === k && g.post);
+      if (cfb) return k > L.weeks ? 'the bowls and playoff' : `week ${k}${post ? ' · postseason' : ''}`;
+      return `week ${k}${post ? ' · postseason' : ''} · through ${fmtDate(weekEnd[k])}`;
+    };
+    let at = weeks.length - 1; // index into weeks; the last one is "now"
+    const apAt = (i) => (data.ap && data.ap[weeks[i]]) || null;
+    const snaps = {};
+    const snapshot = (i) => {
+      if (snaps[i]) return snaps[i];
+      const startOf = (t) => t.start ?? (cfb ? 0 : START);
+      const ratingAt = (t, j) => {
+        if (j < 0) return startOf(t);
+        const hs = t.hist.filter((h) => weekOf(h) <= weeks[j]);
+        return hs.length ? hs[hs.length - 1].elo : startOf(t);
+      };
+      const rows = all.map((t) => {
+        const hs = t.hist.filter((h) => weekOf(h) <= weeks[i]);
+        const reg = hs.filter((h) => !h.post);
+        const w = reg.filter((h) => h.us > h.them).length, l = reg.filter((h) => h.us < h.them).length, d = reg.length - w - l;
+        const elo = ratingAt(t, i), was = ratingAt(t, i - 1);
+        return {
+          ...t, elo, was, last: elo - was, clinch: '', sd: hs.length ? hs[hs.length - 1].sd ?? t.sd : t.sd0,
+          l5: hs.slice(-5).reduce((sum, h) => sum + h.shift, 0),
+          sor: cfb && hs.length ? hs[hs.length - 1].sor : null,
+          record: `${w}-${l}${d ? '-' + d : ''}`, recVal: (w + 0.5 * d) / (reg.length || 1),
+        };
+      });
+      rows.sort((p, q) => q.elo - p.elo).forEach((t, k) => { t.rank = k + 1; });
+      rankRanges(rows);
+      // without last season to start from, everyone's level before the first week: no movement to show
+      if (i > 0 || data.prior) {
+        rows.slice().sort((p, q) => q.was - p.was).forEach((t, k) => { t.move = k + 1 - t.rank; });
+      } else rows.forEach((t) => { t.move = undefined; });
+      return (snaps[i] = { rows, byId: Object.fromEntries(rows.map((t) => [t.id, t])) });
+    };
+    // past weeks drop the columns that only make sense today
+    const pastCols = (showRank) => columns(L, { move: true, hfa, ap: apAt(at) }, showRank)
+      .filter((c) => !['sos', 'left', 'luck', 'playoff'].includes(c.key));
+    const live = () => at === weeks.length - 1;
+    const rowsNow = () => (live() ? all : snapshot(at).rows);
+    const byId = (id) => (live() ? state[id] : snapshot(at).byId[id]);
+    const colsNow = (showRank) => (live() ? columns(L, { ...extra, ap: apAt(at) }, showRank) : pastCols(showRank));
+
     // college lists 138 teams, so the ranked view starts at the top 25
     const more = () => (cfb ? `<button class="more" data-more>${showAll ? 'show top 25' : `show all ${all.length}`}</button>` : '');
     const views = {
-      ranked: () => table(all, columns(L, extra, true), cfb && !showAll ? 25 : 0) + more(),
+      ranked: () => table(rowsNow(), colsNow(true), cfb && !showAll ? 25 : 0) + more(),
       division: () => data.divisions.map(({ name, ids }) =>
-        `<h3>${esc(name)}</h3>` + table(ids.map((id) => state[id]), columns(L, extra, false))).join(''),
+        `<h3>${esc(name)}</h3>` + table(ids.map(byId), colsNow(false))).join(''),
     };
     const resort = (key) => {
-      const asc = key === 'rank';
+      const asc = key === 'rank' || key === 'ap' || key === 'likely';
       sort = sort.key === key ? { key, dir: -sort.dir } : { key, dir: asc ? 1 : -1 };
       show(view);
     };
     const show = (v, scroll) => {
       view = v;
-      $('tables').innerHTML = views[v]() + clinchKey(all);
-      for (const b of document.querySelectorAll('#views button')) b.classList.toggle('active', b.dataset.view === v);
+      $('tables').innerHTML = views[v]() + clinchKey(rowsNow());
+      for (const b of document.querySelectorAll('#views button[data-view]')) b.classList.toggle('active', b.dataset.view === v);
       openFromHash(scroll);
     };
     // a link like #nba/celtics opens that team's panel
@@ -1099,7 +1409,7 @@
       if (!(next && next.classList.contains('hist'))) openPanel(tr, state);
       if (scroll) tr.scrollIntoView({ block: 'center' });
     };
-    for (const b of document.querySelectorAll('#views button')) {
+    for (const b of document.querySelectorAll('#views button[data-view]')) {
       b.onclick = () => show(b.dataset.view);
       if (b.dataset.view === 'division') b.textContent = L.groups === 'conference' || cfb ? 'by conference' : 'by division';
     }
@@ -1123,80 +1433,154 @@
       else if (tr) toggleHistory(tr, state);
     };
     $('views').hidden = false;
+
+    const tm = $('tm');
+    const goTo = (i) => {
+      at = Math.max(0, Math.min(weeks.length - 1, i));
+      tm.value = at;
+      tm.style.setProperty('--fill', `${weeks.length > 1 ? (100 * at) / (weeks.length - 1) : 100}%`);
+      $('tm-label').textContent = live() ? `${weekName(weeks[at]).replace(/^the /, '')} (latest)` : `after ${weekName(weeks[at])}`;
+      $('tm-now').hidden = live();
+      $('tm-prev').disabled = at === 0;
+      $('tm-next').disabled = live();
+    };
+    $('timeline').hidden = weeks.length < 2;
+    tm.max = Math.max(0, weeks.length - 1);
+    tm.oninput = () => { goTo(Number(tm.value)); show(view); };
+    $('tm-prev').onclick = () => { goTo(at - 1); show(view); };
+    $('tm-next').onclick = () => { goTo(at + 1); show(view); };
+    $('tm-now').onclick = () => { goTo(weeks.length - 1); show(view); };
+    goTo(at);
+    const moreBtn = $('more-stats');
+    const moreLabel = () => { moreBtn.textContent = showMore ? 'fewer stats' : 'more stats'; };
+    moreBtn.onclick = () => { showMore = !showMore; moreLabel(); show(view); };
+    moreLabel();
     show(view, true);
+
+    // college polls load in the background and fill in the ap column when they arrive
+    const token = ++renders;
+    if (cfb && weeks.length) {
+      data.polls = data.polls || fetchPolls(L, data, weeks).catch(() => {});
+      data.polls.then(() => { if (token === renders && current === key && data.ap) show(view); });
+    }
 
     $('title').textContent = `${L.name} ${cfb ? 'ratings' : 'Elo'}, ${seasonLabel(L, data.year)}`;
 
     const series = buildSeries(L, data.games);
-    // who to show for a game side: the team, or for college the actual FCS school behind the pooled rating
-    const who = (side) => (side.name ? { name: side.name, color: side.color, alt: side.alt, fcs: true } : state[side.id]);
-    const tag = (t) => `${swatch(t)}${esc(t.name)}${t.fcs ? ' <span class="meta">(FCS)</span>' : ''}`;
-
     const last = played[played.length - 1];
     let status = played.length
-      ? `${played.length} games played · last: ${who(last.away).name} @ ${who(last.home).name}, ${fmtDate(last.date)}`
-      : data.prior ? 'no games played yet; ratings carried over from last season' : `no games played yet; everyone is still at ${base}`;
+      ? `${played.length.toLocaleString('en-US')} games played, through ${fmtDate(last.date)}`
+      : data.prior ? 'no games played yet; ratings start from last season' : `no games played yet; everyone is still at ${base}`;
+    // the model's record: each pick made from the ratings before that game (toss-ups and ties don't count)
+    const picks = played.filter((g) => g.home.score !== g.away.score && Math.abs(g.expHome - 0.5) > 1e-9);
+    const right = picks.filter((g) => (g.expHome > 0.5) === (g.home.score > g.away.score)).length;
+    if (picks.length) status += ` · model picked ${Math.round((100 * right) / picks.length)}% of winners`;
     if (data.failed) status += ` · ${data.failed} schedule request(s) failed, a few games may be missing`;
     $('status').textContent = status;
 
     $('bracket').innerHTML = bracketHTML(L, series, state);
 
-    let html = '';
-    const recent = played.slice(-8).reverse();
-    if (recent.length) {
-      html += '<h3>Recent games</h3><ul class="games">' + recent.map((g) => {
-        const a = who(g.away), h = who(g.home);
-        const awayWon = g.away.score > g.home.score;
-        const gain = awayWon ? (g.aShift ?? -g.shift) : g.shift;
-        return `<li>${fmtDate(g.date)} &nbsp; ${tag(a)} ${g.away.score} @ ${tag(h)} ${g.home.score}
-          &nbsp; <span class="meta">(${esc((awayWon ? a : h).name)} ${cfb ? delta1(gain) : delta(gain)})</span></li>`;
-      }).join('') + '</ul>';
-    }
-
-    const upsets = played
-      .filter((g) => g.home.score !== g.away.score)
-      .map((g) => ({ g, p: g.home.score > g.away.score ? g.expHome : 1 - g.expHome }))
-      .sort((x, y) => x.p - y.p)
-      .slice(0, 5);
-    if (upsets.length) {
-      html += '<h3>Biggest upsets</h3><ul class="games">' + upsets.map(({ g, p }) => {
-        const a = who(g.away), h = who(g.home);
-        const winner = g.home.score > g.away.score ? h : a;
-        return `<li>${fmtDate(g.date)} &nbsp; ${tag(a)} ${g.away.score} @ ${tag(h)} ${g.home.score}
-          &nbsp; <span class="meta">(${esc(winner.name)} had ${esc(pctText(p))})</span></li>`;
-      }).join('') + '</ul>';
-    }
-
-    const cutoff = Date.now() - 12 * 3600 * 1000;
-    const upcoming = data.games.filter((g) => !g.done && g.date >= cutoff);
-    const next = upcoming.slice(0, 8);
-    if (next.length) {
-      html += '<h3>Up next</h3>';
-
-      // game of the week: over the next 7 days, the matchup whose weaker team is strongest,
-      // which rewards both good teams and close odds
-      const horizon = upcoming[0].date.getTime() + 7 * 24 * 3600 * 1000;
-      const gotw = upcoming.filter((g) => g.date <= horizon).reduce((best, g) => {
-        const q = Math.min(state[g.home.id].elo, state[g.away.id].elo);
-        return !best || q > best.q ? { g, q } : best;
-      }, null);
-      if (gotw) {
-        const g = gotw.g;
-        const pHome = gameProb(state, g);
-        const fav = pHome >= 0.5 ? who(g.home) : who(g.away);
-        html += `<p class="gotw"><span class="meta">game of the week</span> &nbsp; ${fmtDate(g.date)} &nbsp; ` +
-          `${tag(who(g.away))} @ ${tag(who(g.home))} &nbsp; ` +
-          `<span class="meta">${esc(fav.name)} ${esc(pctText(Math.max(pHome, 1 - pHome)))}</span></p>`;
+    // recent games, upsets and up next; redrawn when the pro leagues' betting lines arrive
+    let shown = [];
+    const drawLists = () => {
+      let html = '';
+      const recent = played.slice(-8).reverse();
+      if (recent.length) {
+        html += '<h3>Recent games</h3><ul class="games">' + recent.map((g) => {
+          const a = who(g.away), h = who(g.home);
+          const awayWon = g.away.score > g.home.score;
+          const gain = awayWon ? (g.aShift ?? -g.shift) : g.shift;
+          return `<li><span class="sub">${fmtDate(g.date)}</span><span>${tag(a)} ${g.away.score} @ ${tag(h)} ${g.home.score}</span>
+            <span class="sub">${esc((awayWon ? a : h).name)} ${cfb ? delta1(gain) : delta(gain)}</span></li>`;
+        }).join('') + '</ul>';
       }
 
-      html += '<ul class="games">' + next.map((g) => {
-        const pHome = gameProb(state, g);
-        const fav = pHome >= 0.5 ? who(g.home) : who(g.away);
-        return `<li>${fmtDate(g.date)} &nbsp; ${tag(who(g.away))} @ ${tag(who(g.home))}
-          &nbsp; <span class="meta">${esc(fav.name)} ${esc(pctText(Math.max(pHome, 1 - pHome)))}</span></li>`;
-      }).join('') + '</ul>';
+      const upsets = played
+        .filter((g) => g.home.score !== g.away.score)
+        .map((g) => ({ g, p: g.home.score > g.away.score ? g.expHome : 1 - g.expHome }))
+        .sort((x, y) => x.p - y.p)
+        .slice(0, 5);
+      if (upsets.length) {
+        html += '<h3>Biggest upsets</h3><ul class="games">' + upsets.map(({ g, p }) => {
+          const a = who(g.away), h = who(g.home);
+          const winner = g.home.score > g.away.score ? h : a;
+          return `<li><span class="sub">${fmtDate(g.date)}</span><span>${tag(a)} ${g.away.score} @ ${tag(h)} ${g.home.score}</span>
+            <span class="sub">${esc(winner.name)} had ${esc(pctText(p))}</span></li>`;
+        }).join('') + '</ul>';
+      }
+
+      const upNext = (g) => `<li><span class="sub">${fmtDate(g.date)}</span>` +
+        `<span>${tag(who(g.away))} ${g.neutral ? 'vs' : '@'} ${tag(who(g.home))}</span><span class="sub">${oddsText(g)}</span></li>`;
+      const cutoff = Date.now() - 12 * 3600 * 1000;
+      const upcoming = data.games.filter((g) => !g.done && g.date >= cutoff);
+      const next = upcoming.slice(0, 8);
+      if (next.length) {
+        html += '<h3>Up next</h3>';
+
+        // game of the week: over the next 7 days, the matchup whose weaker team is strongest,
+        // which rewards both good teams and close odds
+        const horizon = upcoming[0].date.getTime() + 7 * 24 * 3600 * 1000;
+        const gotw = upcoming.filter((g) => g.date <= horizon).reduce((best, g) => {
+          const q = Math.min(state[g.home.id].elo, state[g.away.id].elo);
+          return !best || q > best.q ? { g, q } : best;
+        }, null);
+        if (gotw) {
+          const g = gotw.g;
+          shown.push(g);
+          html += `<p class="gotw-label">game of the week</p><ul class="games gotw">${upNext(g)}</ul>`;
+        }
+
+        shown.push(...next);
+        html += '<ul class="games">' + next.filter((g) => !gotw || g !== gotw.g).map(upNext).join('') + '</ul>';
+      }
+      $('recent').innerHTML = html;
+    };
+    drawLists();
+
+    // pro schedules don't carry betting lines, so fetch the scoreboards for the dates shown, once
+    const need = shown.filter((g) => g.line === undefined);
+    if (!cfb && need.length && !data.linesLoading) {
+      data.linesLoading = fetchLines(L, data, need).then(() => { if (curData === data) drawLists(); });
     }
-    $('recent').innerHTML = html;
+  }
+
+  // college: the AP poll released after each week's games (ESPN files it under the next week; the final
+  // poll comes after the bowls). A week with no poll of its own keeps the one before it
+  async function fetchPolls(L, data, weeks) {
+    const core = `https://sports.core.api.espn.com/v2/sports/${L.path.replace('/', '/leagues/')}/seasons/${data.year}`;
+    const jobs = weeks.map((k) => ({
+      k, url: k > L.weeks ? `${core}/types/3/weeks/1/rankings/1` : `${core}/types/2/weeks/${k + 1}/rankings/1`,
+    }));
+    const res = await pool(jobs, CONCURRENCY, (j) => getJSON(j.url, 1).then((d) => ({ ...j, d })).catch(() => ({ ...j, d: null })));
+    const ap = {};
+    let last = null;
+    for (const { k, d } of res.sort((p, q) => p.k - q.k)) {
+      if (d && (d.ranks || []).length) {
+        last = {
+          date: d.date ? new Date(d.date) : null,
+          final: k > L.weeks,
+          rank: Object.fromEntries(d.ranks.map((r) => [((r.team || {}).$ref || '').match(/teams\/(\d+)/)?.[1], r.current])),
+        };
+      }
+      ap[k] = last;
+    }
+    data.ap = ap;
+  }
+
+  // one scoreboard request per (US Eastern) date; games without a line are marked null so they aren't asked for again
+  async function fetchLines(L, data, games) {
+    const ymd = (d) => d.toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '');
+    const dates = [...new Set(games.map((g) => ymd(g.date)))].slice(0, 7);
+    const byId = Object.fromEntries(data.games.map((g) => [g.id, g]));
+    await pool(dates, CONCURRENCY, (d) => getJSON(`${BASE}/site/v2/sports/${L.path}/scoreboard?dates=${d}`)
+      .then((sb) => {
+        for (const ev of sb.events || []) {
+          const g = byId[ev.id];
+          if (g && !g.done) g.line = parseLine(ev.competitions[0]);
+        }
+      })
+      .catch(() => {}));
+    for (const g of games) if (g.line === undefined) g.line = null;
   }
 
   function select(key) {

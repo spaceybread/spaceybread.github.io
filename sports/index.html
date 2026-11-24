@@ -44,6 +44,7 @@
     }
 
     table.elo th {
+      white-space: nowrap;
       color: #999;
       font-weight: 400;
       text-align: left;
@@ -154,9 +155,22 @@
       color: #e0e0e0;
     }
 
-    /* columns that drop out on narrow screens */
+    table.elo .lbl-short { display: none; } /* shorter header words on phones */
+
+    /* columns that drop out on narrow screens; anything still too wide scrolls sideways */
+    #tables { overflow-x: auto; }
+
     @media (max-width: 640px) {
       table.elo .opt { display: none; }
+      table.elo { font-size: 0.8rem; }
+      table.elo th, table.elo td { padding-left: 0.25rem; padding-right: 0.25rem; }
+      table.elo th:not(.sorted) .ind { display: none; } /* only the sorted column keeps its marker */
+      table.elo .swatch { margin-right: 0.4rem; }
+      table.elo .rank { width: 1.3rem; }
+      table.elo .lbl-long { display: none; }
+      table.elo .lbl-short { display: inline; }
+      #views button.aside { margin-left: 0; padding-left: 0; border-left: none; }
+      .timeline { flex-wrap: wrap; }
     }
 
     table.elo td {
@@ -240,6 +254,18 @@
       fill: #32CD32;
       stroke: #1a1a1a;
       stroke-width: 2;
+    }
+
+    /* uncertainty band: one standard error either side of the rating */
+    .chart .band { fill: #32CD32; opacity: 0.12; }
+    .chart .band.a { fill: #29a829; }
+    .chart .band.b { fill: #4a8fd6; }
+
+    /* hover explanations inside the team panel */
+    .panel-meta [data-tip] {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted #555;
     }
 
     /* comparing two teams: a validated green/blue pair, with a legend and labelled ends */
@@ -421,6 +447,130 @@
       color: #32CD32;
     }
 
+    /* the hidden attribute always wins over display rules below */
+    [hidden] { display: none !important; }
+
+    /* "more stats" sits apart from the view buttons */
+    .toggle button.aside {
+      margin-left: 1rem;
+      padding-left: 1.25rem;
+      border-left: 1px solid #444;
+    }
+
+    /* time machine: a hairline track with a square thumb, stepped with ‹ › */
+    .timeline {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin: -0.1rem 0 1rem;
+      font-size: 0.85rem;
+    }
+
+    .timeline button {
+      font: inherit;
+      background: none;
+      border: none;
+      padding: 0 0.15rem;
+      color: #999;
+      cursor: pointer;
+    }
+
+    .timeline button:hover:not(:disabled) { color: #32CD32; }
+    .timeline button:disabled { color: #444; cursor: default; }
+
+    .timeline input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      max-width: 16rem;
+      height: 14px;
+      margin: 0;
+      cursor: pointer;
+      background:
+        linear-gradient(#32CD32, #32CD32) 0 50% / var(--fill, 100%) 1px no-repeat,
+        linear-gradient(#444, #444) 0 50% / 100% 1px no-repeat;
+    }
+
+    .timeline input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 0.55rem;
+      height: 0.55rem;
+      background: #32CD32;
+      border: none;
+      border-radius: 0;
+    }
+
+    .timeline input[type="range"]::-moz-range-thumb {
+      width: 0.55rem;
+      height: 0.55rem;
+      background: #32CD32;
+      border: none;
+      border-radius: 0;
+    }
+
+    .timeline input[type="range"]::-moz-range-track { background: transparent; }
+    .timeline input[type="range"]:focus-visible { outline: 1px solid #32CD32; outline-offset: 3px; }
+
+    #tm-label { white-space: nowrap; }
+    #tm-now::before { content: '· '; color: #555; }
+
+    /* game lists: date · matchup · note, in aligned columns */
+    .games li {
+      display: grid;
+      grid-template-columns: 3.6rem 1fr auto;
+      column-gap: 0.75rem;
+      align-items: baseline;
+    }
+
+    .games .sub {
+      color: #999;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .games li > .sub:first-child { text-align: left; } /* the date */
+
+    .games .line { color: #666; }
+
+    .gotw-label {
+      font-size: 0.75rem;
+      color: #777;
+      margin: 0 0 0.1rem;
+    }
+
+    .games.gotw { margin-bottom: 0.7rem; }
+    .games.gotw li { color: #e0e0e0; }
+
+    /* team panel: facts, controls, chart, then resume and schedule side by side */
+    .panel-meta + .panel-meta { margin-top: -0.2rem; }
+
+    .panel-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem 1.5rem;
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      color: #bbb;
+    }
+
+    .panel-cols h4 {
+      margin: 0 0 0.2rem;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #777;
+    }
+
+    .panel-cols ul { list-style: none; margin: 0; padding: 0; }
+    .panel-cols li { margin-bottom: 0.15rem; white-space: nowrap; }
+    .panel-cols .swatch { margin-right: 0.35rem; }
+    .panel-cols .sub { color: #999; }
+
+    @media (max-width: 640px) {
+      .panel-cols { grid-template-columns: 1fr; }
+      .games li { grid-template-columns: 3.2rem 1fr; }
+      .games .sub { grid-column: 2; text-align: left; }
+    }
+
     .note {
       color: #999;
       font-size: 0.85rem;
@@ -461,6 +611,15 @@
     <div class="toggle" id="views" hidden>
       <button data-view="ranked" class="active">ranked</button>
       <button data-view="division">by division</button>
+      <button id="more-stats" class="aside">more stats</button>
+    </div>
+
+    <div class="timeline" id="timeline" hidden>
+      <button id="tm-prev" aria-label="previous week">‹</button>
+      <input type="range" id="tm" min="0" max="0" value="0" aria-label="show the table as it stood after a given week">
+      <button id="tm-next" aria-label="next week">›</button>
+      <span class="meta" id="tm-label"></span>
+      <button id="tm-now" hidden>now</button>
     </div>
 
     <div id="tables"></div>
