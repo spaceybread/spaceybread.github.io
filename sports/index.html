@@ -17,10 +17,38 @@
       font-size: 0.9rem;
     }
 
-    .toggle.leagues {
-      margin-top: 0;
-      font-size: 1rem;
+    /* league picker: leagues grouped under their sport */
+    .leagues {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem 2.25rem;
+      margin: 0 0 0.25rem;
     }
+
+    .sport-name {
+      display: block;
+      font-size: 0.7rem;
+      color: #666;
+      margin-bottom: 0.05rem;
+    }
+
+    .sport.current .sport-name { color: #999; }
+
+    .leagues button {
+      font: inherit;
+      background: none;
+      border: none;
+      padding: 0;
+      margin-right: 1rem;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    .leagues button:last-child { margin-right: 0; }
+    .leagues button.off { color: #777; } /* between seasons: shows the last one */
+    .leagues button:hover,
+    .leagues button.active { color: #32CD32; }
+    .leagues button:focus-visible { outline: 1px solid #32CD32; outline-offset: 2px; }
 
     .toggle button {
       font: inherit;
@@ -594,16 +622,24 @@
   </header>
 
   <main>
-    <div class="toggle leagues" id="leagues">
-      <button data-league="nfl">NFL</button>
-      <button data-league="nba">NBA</button>
-      <button data-league="nhl">NHL</button>
-      <button data-league="mlb">MLB</button>
-      <button data-league="wnba">WNBA</button>
-      <button data-league="cfb">CFB</button>
-      <button data-league="cbb">CBB</button>
-      <button data-league="wcbb">WCBB</button>
-    </div>
+    <nav class="leagues" id="leagues" aria-label="leagues">
+      <div class="sport">
+        <span class="sport-name">football</span>
+        <button data-league="nfl">NFL</button><button data-league="cfb">CFB</button>
+      </div>
+      <div class="sport">
+        <span class="sport-name">basketball</span>
+        <button data-league="nba">NBA</button><button data-league="wnba">WNBA</button><button data-league="cbb">CBB</button><button data-league="wcbb">WCBB</button>
+      </div>
+      <div class="sport">
+        <span class="sport-name">hockey</span>
+        <button data-league="nhl">NHL</button>
+      </div>
+      <div class="sport">
+        <span class="sport-name">baseball</span>
+        <button data-league="mlb">MLB</button>
+      </div>
+    </nav>
 
     <h2 id="title">Elo</h2>
     <p class="meta" id="status">fetching games ...</p>

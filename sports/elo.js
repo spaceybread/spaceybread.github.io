@@ -15,6 +15,7 @@
   // spread of errors matched the actual spread to within about 10% at every stage of the season
   const LEAGUES = {
     nfl: {
+      months: [8, 1], // in season from the first month to the second (0 = January)
       games: 17, name: 'NFL', path: 'football/nfl', K: 20, mult: logMult, splitYear: false, eloPerPoint: 25,
       hfa: 30, rest: { cap: 13, elo: 5 }, carry: 10, // byes and short weeks
       unc: { ridge: 4, half: 120, noise: 8.3, eloPer: 22.6 },
@@ -23,6 +24,7 @@
       clinch: { '*': 'clinched the #1 seed and a bye', z: 'clinched the division', y: 'clinched a wild card', x: 'clinched a playoff spot', e: 'eliminated from playoff contention' },
     },
     nba: {
+      months: [9, 5], // in season from the first month to the second (0 = January)
       games: 82, name: 'NBA', path: 'basketball/nba', K: 20, mult: nbaMult, splitYear: true, playIn: true, eloPerPoint: 28,
       hfa: 40, rest: { cap: 1, elo: 60 }, carry: 12, // back-to-backs
       unc: { ridge: 8, half: 60, noise: 13.7, eloPer: 21.3 },
@@ -31,6 +33,7 @@
       clinch: { '*': 'clinched the best record in the league', z: 'clinched the #1 seed in the conference', y: 'clinched the division', x: 'clinched a playoff spot', xp: 'reached the playoffs through the play-in', pb: 'clinched a play-in spot', e: 'eliminated from playoff contention' },
     },
     nhl: {
+      months: [9, 5], // in season from the first month to the second (0 = January)
       games: 82, name: 'NHL', path: 'hockey/nhl', K: 8, mult: nhlMult, splitYear: true,
       hfa: 20, rest: { cap: 1, elo: 60 }, carry: 60, // back-to-backs
       unc: { ridge: 40, half: 0, noise: 2.52, eloPer: 116 },
@@ -39,6 +42,7 @@
       clinch: { '*': "clinched the Presidents' Trophy (best record)", z: 'clinched the conference', y: 'clinched the division', x: 'clinched a playoff spot', e: 'eliminated from playoff contention' },
     },
     wnba: {
+      months: [4, 9], // in season from the first month to the second (0 = January)
       games: 44, name: 'WNBA', path: 'basketball/wnba', K: 30, mult: nbaMult, splitYear: false, eloPerPoint: 28,
       hfa: 30, rest: { cap: 3, elo: 15 }, carry: 12,
       unc: { ridge: 4, half: 0, noise: 10.3, eloPer: 22.8 },
@@ -49,9 +53,10 @@
       clinch: { '*': 'clinched the #1 seed', x: 'clinched a playoff spot', e: 'eliminated from playoff contention' },
     },
     cfb: {
+      months: [7, 0], // in season from the first month to the second (0 = January)
       // college: too many teams and too few games for Elo, so a season-long power rating instead (see rateCfb);
       // its settings were picked by backtesting 2021-2025, predicting each week from the weeks before it
-      kind: 'cfb', college: true, games: 12, name: 'CFB', path: 'football/college-football', splitYear: false, base: 0,
+      kind: 'cfb', college: true, games: 12, name: 'CFB', title: 'College football', path: 'football/college-football', splitYear: false, base: 0,
       pool: 'FCS', postName: 'bowls', bracketName: 'College Football Playoff',
       rounds: ['First Round', 'Quarterfinals', 'Semifinals', 'Championship'], winsNeeded: [1, 1, 1, 1],
       cap: 28, // margins beyond this don't count, so running up the score doesn't pay
@@ -64,18 +69,21 @@
     // college basketball: same power rating as college football, refit daily; picked by backtesting 2022-2026
     // (men 74% of winners, women 77%). carry: points of starting rating per point of last season's average margin
     cbb: {
-      kind: 'cbb', college: true, games: 31, name: 'CBB', path: 'basketball/mens-college-basketball', splitYear: true, base: 0,
+      months: [10, 3], // in season from the first month to the second (0 = January)
+      kind: 'cbb', college: true, games: 31, name: 'CBB', title: "Men's college basketball", path: 'basketball/mens-college-basketball', splitYear: true, base: 0,
       rounds: ['Sweet 16', 'Elite 8', 'Final Four', 'Championship'], winsNeeded: [1, 1, 1, 1],
       cap: 30, ridge: 2, carry: 0.9, otherStart: -15, sigma: 12, noise: 10.4, uncScale: 0.6, weeks: 19,
       pool: 'non-D1', postName: 'tournament', bracketName: 'NCAA tournament',
     },
     wcbb: {
-      kind: 'cbb', college: true, games: 30, name: 'WCBB', path: 'basketball/womens-college-basketball', splitYear: true, base: 0,
+      months: [10, 3], // in season from the first month to the second (0 = January)
+      kind: 'cbb', college: true, games: 30, name: 'WCBB', title: "Women's college basketball", path: 'basketball/womens-college-basketball', splitYear: true, base: 0,
       rounds: ['Sweet 16', 'Elite 8', 'Final Four', 'Championship'], winsNeeded: [1, 1, 1, 1],
       cap: 30, ridge: 1, carry: 1, otherStart: -15, sigma: 11, noise: 10.7, uncScale: 0.6, weeks: 19,
       pool: 'non-D1', postName: 'tournament', bracketName: 'NCAA tournament',
     },
     mlb: {
+      months: [2, 9], // in season from the first month to the second (0 = January)
       games: 162, name: 'MLB', path: 'baseball/mlb', K: 3.2, mult: logMult, splitYear: false,
       hfa: 20, rest: null, carry: 40, // rest made no difference in baseball
       unc: { ridge: 80, half: 0, noise: 4.39, eloPer: 80 },
@@ -1696,7 +1704,7 @@
       data.polls.then(() => { if (token === renders && current === key && data.ap) show(view); });
     }
 
-    $('title').textContent = `${L.name} ${cfb ? 'ratings' : 'Elo'}, ${seasonLabel(L, data.year)}`;
+    $('title').textContent = `${L.title || L.name} ${cfb ? 'ratings' : 'Elo'}, ${seasonLabel(L, data.year)}`;
 
     const series = buildSeries(L, data.games);
     const last = played[played.length - 1];
@@ -1820,8 +1828,9 @@
     current = key;
     openFromHash = () => {};
     for (const b of document.querySelectorAll('#leagues button')) b.classList.toggle('active', b.dataset.league === key);
+    for (const g of document.querySelectorAll('#leagues .sport')) g.classList.toggle('current', !!g.querySelector('button.active'));
 
-    $('title').textContent = `${LEAGUES[key].name} Elo`;
+    $('title').textContent = LEAGUES[key].title || `${LEAGUES[key].name} Elo`;
     $('status').textContent = 'fetching games ...';
     $('views').hidden = true;
     $('tables').innerHTML = $('bracket').innerHTML = $('recent').innerHTML = '';
@@ -1835,8 +1844,14 @@
       });
   }
 
+  // leagues between seasons are dimmed (they show the season that just ended)
+  const month = new Date().getMonth();
   for (const b of document.querySelectorAll('#leagues button')) {
     b.onclick = () => { location.hash = b.dataset.league; };
+    const [from, to] = (LEAGUES[b.dataset.league] || {}).months || [0, 11];
+    const on = from <= to ? month >= from && month <= to : month >= from || month <= to;
+    b.classList.toggle('off', !on);
+    if (!on) b.title = 'between seasons: showing the last one';
   }
   window.addEventListener('hashchange', () => {
     const [league] = hashParts();
